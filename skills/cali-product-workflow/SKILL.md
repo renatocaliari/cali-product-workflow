@@ -293,6 +293,10 @@ ask_user_question({
       {
         label: "Short-Cycle Product Method",
         description: "Validação de ideias com experimentos pequenos e rápidos. Antes de construir, teste. Métricas, canais, pricing, modelo de negócio."
+      },
+      {
+        label: "Multi-Method Market Analysis",
+        description: "Análise profunda de mercado usando PESTLE, Wardley Maps, Delphi e Foresight. Entenda o cenário competitivo e tendências futuras."
       }
     ]
   }]
@@ -306,6 +310,7 @@ ask_user_question({
    - `cali-product-evolutionary-principles` para Evolutionary
    - `cali-product-opportunity-mapping` para Opportunity Mapping
    - `cali-product-short-cycle` para Short-Cycle (experimentos, pricing, canais, modelo)
+   - `cali-product-multi-method-market-analysis` para Multi-Method Market Analysis
 
 2. **Gera arquivos individuais:**
    ```
@@ -313,7 +318,8 @@ ask_user_question({
    ├── jtbd-analysis.md
    ├── evolutionary-analysis.md
    ├── opportunity-mapping.md
-   └── short-cycle-analysis.md
+   ├── short-cycle-analysis.md
+   └── market-analysis.md
    ```
 
 3. **Gera consolidated executive summary:**
@@ -327,12 +333,14 @@ ask_user_question({
    - Evolutionary highlights (top 5 insights)
    - Opportunity Mapping highlights (top 5 insights)
    - Short-Cycle highlights (top 5 insights)
+   - Market Analysis highlights (top 5 insights)
 
 2. Links para arquivos completos:
    - [JTBD Analysis](./jtbd-analysis.md)
    - [Evolutionary Analysis](./evolutionary-analysis.md)
    - [Opportunity Mapping](./opportunity-mapping.md)
    - [Short-Cycle Analysis](./short-cycle-analysis.md)
+   - [Market Analysis](./market-analysis.md)
 
 3. Top Opportunities (consolidated across all 4)
 
@@ -948,7 +956,7 @@ Fluxo:
 ```bash
 /skill:autoresearch-create
 ```
-Fluxo (via cali-scope-executor):
+Fluxo (via cali-product-scope-executor):
 1. subagent(agent: "delegate") → /skill:autoresearch-create
 2. Autoresearch loop com métrica
 3. parallel-review quando done
@@ -989,7 +997,7 @@ Fluxo (via cali-scope-executor):
 
 Após o tech planning, execute o roteamento:
 
-- **pi.dev:** `/skill:cali-scope-executor`
+- **pi.dev:** `/skill:cali-product-scope-executor`
 - **Fusion:** automático — tasks em `todo` com plano aprovado são
   executadas pelo executor no próximo heartbeat.
 
@@ -1041,7 +1049,7 @@ As ferramentas abaixo podem variar. Siga as regras:
 | **pi.dev** | ✅ Disponível via comando de chat. |
 | **Fusion** | ⚠️ Substitua por `fn_mission_create` para criar hierarquia Mission→Milestone→Slice. O board do Fusion já faz tracking de progresso. |
 
-### Comando: /skill:cali-scope-executor
+### Comando: /skill:cali-product-scope-executor
 
 | Ambiente | Como usar |
 |---|---|

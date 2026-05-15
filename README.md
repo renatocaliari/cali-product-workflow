@@ -1,10 +1,10 @@
 # @cali/pi-product-workflow
 
-Product workflow package for pi.dev coding agent. Includes 13 specialized skills for product planning, strategy, and execution.
+Product workflow package for pi.dev coding agent. Includes 15 specialized skills for product planning, strategy, and execution.
 
 ## Skills
 
-### Core Planning
+### Core Planning (7 skills)
 | Skill | Invocação | Description |
 |-------|-----------|-------------|
 | **Product Workflow** | `/skill:cali-product-workflow` | Main workflow: Shape Up + Interface + Tech Planning + Critique + Gate |
@@ -12,12 +12,15 @@ Product workflow package for pi.dev coding agent. Includes 13 specialized skills
 | **Opportunity Mapping** | `/skill:cali-product-opportunity-mapping` | Strategic opportunity analysis |
 | **Job-to-Be-Done** | `/skill:cali-product-job-to-be-done` | JTBD framework for needs discovery |
 | **Evolutionary Principles** | `/skill:cali-product-evolutionary-principles` | Stepping-stones and product evolution |
+| **Multi-Method Market Analysis** | `/skill:cali-product-multi-method-market-analysis` | PESTLE, Wardley Maps, Delphi, Foresight |
+| **Scope Executor** | `/skill:cali-product-scope-executor` | Execute approved scopes with autonomous overnight |
 
-### Growth & Marketing
+### Growth & Marketing (8 skills)
 | Skill | Invocação | Description |
 |-------|-----------|-------------|
 | **Ads** | `/skill:cali-product-ads` | Advertising strategies (Transtheoretical Model) |
 | **Business Models** | `/skill:cali-product-business-models` | Business model creativity |
+| **Health** | `/skill:cali-product-health` | Product health monitoring |
 | **Marketplace Playbook** | `/skill:cali-product-marketplace-playbook` | Supply/demand balance tactics |
 | **Open Source** | `/skill:cali-product-open-source` | Open source strategy paradox |
 | **Pricing** | `/skill:cali-product-pricing` | Pricing strategies and models |
@@ -42,7 +45,7 @@ This package integrates with other pi.dev extensions for full orchestration:
 
 ### 1. Install the package
 ```bash
-pi install ./path/to/@cali/pi-product-workflow
+pi install ./path/to/pi-product-workflow
 ```
 
 ### 2. Install dependencies (recommended)
@@ -58,7 +61,7 @@ pi install npm:pi-supervisor
 
 ### 3. Or install all at once
 ```bash
-pi install npm:pi-subagents npm:@capyup/pi-goal @plannotator/pi-extension pi-autoresearch @juicesharp/rpiv-ask-user-question pi-intercom pi-supervisor ./path/to/@cali/pi-product-workflow
+pi install npm:pi-subagents npm:@capyup/pi-goal @plannotator/pi-extension pi-autoresearch @juicesharp/rpiv-ask-user-question pi-intercom pi-supervisor ./path/to/pi-product-workflow
 ```
 
 ## Usage
@@ -68,6 +71,8 @@ pi install npm:pi-subagents npm:@capyup/pi-goal @plannotator/pi-extension pi-aut
 /skill:cali-product-workflow
 /skill:cali-product-short-cycle "validate my idea"
 /skill:cali-product-opportunity-mapping
+/skill:cali-product-multi-method-market-analysis
+/skill:cali-product-scope-executor
 ```
 
 ### Via AGENTS.md
@@ -96,14 +101,18 @@ The package includes a lightweight extension (`extensions/cali-product-workflow/
 ## Package Structure
 
 ```
-@cali/pi-product-workflow/
+pi-product-workflow/
 ├── package.json
-├── skills/
-│   ├── cali-product-workflow/           # Main workflow skill
+├── README.md, LICENSE, CHANGELOG.md
+├── cali-product-workflow.schema.json
+├── skills/                    # 15 skills
+│   ├── cali-product-workflow/           # Main workflow
 │   ├── cali-product-short-cycle/
 │   ├── cali-product-opportunity-mapping/
 │   ├── cali-product-job-to-be-done/
 │   ├── cali-product-evolutionary-principles/
+│   ├── cali-product-multi-method-market-analysis/
+│   ├── cali-product-scope-executor/
 │   ├── cali-product-ads/
 │   ├── cali-product-business-models/
 │   ├── cali-product-health/
