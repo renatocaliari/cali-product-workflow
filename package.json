@@ -1,0 +1,85 @@
+{
+  "name": "@cali/pi-product-workflow",
+  "version": "1.0.0",
+  "description": "Product workflow for pi.dev: Shape Up + Interface + Tech Planning + Critique + Gate. Includes 13 product skills and integrates with pi-subagents (nicobailon), pi-goal (capyup), plannotator (backnotprop), autoresearch (davebcn87), ask-user-question (juicesharp), intercom (nicobailon), and supervisor (tintinweb).",
+  "keywords": [
+    "pi-package",
+    "pi-skill",
+    "pi-extension",
+    "workflow",
+    "product",
+    "shape-up",
+    "product-planning",
+    "product-management"
+  ],
+  "license": "MIT",
+  "author": "Cali",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cali/pi-product-workflow.git"
+  },
+  "homepage": "https://github.com/cali/pi-product-workflow#readme",
+  "bugs": {
+    "url": "https://github.com/cali/pi-product-workflow/issues"
+  },
+  "pi": {
+    "extensions": ["./extensions"],
+    "skills": [
+      "./skills/cali-product-workflow",
+      "./skills/cali-product-short-cycle",
+      "./skills/cali-product-opportunity-mapping",
+      "./skills/cali-product-job-to-be-done",
+      "./skills/cali-product-evolutionary-principles",
+      "./skills/cali-product-ads",
+      "./skills/cali-product-business-models",
+      "./skills/cali-product-health",
+      "./skills/cali-product-marketplace-playbook",
+      "./skills/cali-product-open-source",
+      "./skills/cali-product-pricing",
+      "./skills/cali-product-promotions",
+      "./skills/cali-product-trust-building"
+    ]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": ">=0.74.0",
+    "@earendil-works/pi-tui": "*",
+    "typebox": "*",
+    "pi-subagents": ">=0.24.0",
+    "@capyup/pi-goal": ">=0.6.0",
+    "@plannotator/pi-extension": ">=0.19.0",
+    "pi-autoresearch": ">=0.1.0",
+    "@juicesharp/rpiv-ask-user-question": ">=1.6.0",
+    "pi-intercom": ">=0.6.0",
+    "pi-supervisor": ">=0.4.0"
+  },
+  "optionalPeerDependencies": {
+    "cali-short-cycle-product": "*",
+    "cali-opportunity-mapping": "*",
+    "cali-job-to-be-done-framework": "*",
+    "cali-evolutionary-principles": "*",
+    "cali-product-ads": "*",
+    "cali-product-business-models": "*",
+    "cali-product-health": "*",
+    "cali-product-marketplace-playbook": "*",
+    "cali-product-open-source": "*",
+    "cali-product-pricing": "*",
+    "cali-product-promotions": "*",
+    "cali-product-trust-building": "*"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "files": [
+    "skills/",
+    "extensions/",
+    "scripts/",
+    "cali-product-workflow.schema.json",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ]
+}

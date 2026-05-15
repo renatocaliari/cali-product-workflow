@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# pi specific
+.pi/
+.pi-*
+
+# Test coverage
+coverage/
+
+# Temporary files
+*.tmp
+*.temp
+.tmp/
+temp/
+
+# Lock files (optional - some prefer to keep)
+# package-lock.json
+pnpm-lock.yaml

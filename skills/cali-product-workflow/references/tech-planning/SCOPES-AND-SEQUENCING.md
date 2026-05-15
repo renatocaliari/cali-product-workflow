@@ -1,0 +1,164 @@
+---
+source: cali-product-planner (consolidated)
+original_files: scope-types.md, sequence-principles.md
+date: 2026-05-15
+---
+
+---
+
+## Layer Decomposition (Phase B Enhancement)
+
+Cada scope deve explicitar a decomposição por camadas para reduzir gap entre planning e implementation.
+
+### [LAYERS]
+```yaml
+[LAYERS]
+  domain:    { Descrição do domínio: lifecycle, state, invariants }
+  data:      { Schema, tabelas, caches }
+  api:       { Endpoints REST/gRPC, contratos }
+  ui:        { Componentes, telas, fluxos }
+````
+
+### [INTEGRATION-POINTS]
+```yaml
+[INTEGRATION-POINTS]
+  inbound:   { Middleware, guards, event handlers }
+  outbound:  { Services externos, databases, queues }
+````
+
+### [CAN-DEPLOY-INDEPENDENTLY]
+- `true`: Scope pode ser deployado sem outros scopes
+- `false`: Depende de outros scopes para funcionar
+
+### Exemplo Completo
+```yaml
+[SCOPE-1] Authentication Foundation
+[TYPE] feature
+[LAYERS]
+  domain:    Token lifecycle, session state, refresh mechanism
+  data:      UserSession table, JWT claims schema, Redis cache
+  api:       POST /auth/login, POST /auth/refresh, POST /auth/logout
+  ui:        LoginForm, SessionIndicator, LogoutButton
+[INTEGRATION-POINTS]
+  inbound:   Middleware auth check, route guards
+  outbound:  UserService, Redis session store
+[CAN-DEPLOY-INDEPENDENTLY] true
+```
+
+---
+
+# Tech Planning — Scope Types & Sequencing Principles
+
+## Scope Types
+
+Each scope must be typed:
+
+- **`feature`** — implement new functionality, UI, API endpoints, workflows
+- **`optimization`** — improve an existing measurable metric (perf, bundle, build time, test speed, Lighthouse score, memory, cost). These are candidates for autonomous experiment loops.
+- **`spike`** — research/prototype to reduce uncertainty
+
+Use the type to inform execution routing:
+- `feature` scopes → execute via worker/agent
+- `optimization` scopes → execute via autonomous experiment loop
+- `spike` scopes → execute via dedicated investigation
+
+If a scope has both feature and optimization aspects, split it into two scopes or mark it as the dominant type and note the secondary concern in the description.
+
+---
+
+## Executor Override (`[EXECUTOR]`)
+
+**Optional.** When present, overrides the default routing by type.
+
+```
+[SCOPE-4]
+[TYPE] feature
+[EXECUTOR] autoresearch
+[METRIC] Complexidade ciclomática média < 10 (lower is better)
+```
+
+### Rule: when to add `[EXECUTOR] autoresearch`
+
+Add when ALL conditions are true:
+
+1. ✅ The scope HAS a measurable metric (latency, bundle size, complexity, coverage, build time, etc.)
+2. ✅ You can create an automated benchmark that produces `METRIC name=value`
+3. ✅ The work modifies EXISTING code (doesn't create new functionality)
+
+**⚠️ IMPORTANT: Routing via subagent**
+
+The `autoresearch` executor NEVER runs in the main agent. The routing is:
+
+```
+optimization scope → cali-scope-executor → subagent (delegate/worker) → /skill:autoresearch-create
+```
+
+The cali-scope-executor delegates to a subagent that executes `/skill:autoresearch-create`.
+Never invoke autoresearch directly in the main agent — this creates infinite loops in the planner's context.
+
+**Keep default routing (no `[EXECUTOR]`) when:**
+
+1. ❌ The scope creates something NEW (feature, screen, flow)
+2. ❌ The result is binary (works/doesn't work)
+3. ❌ Involves UI/UX that needs human judgment
+
+### Examples
+
+| Scope | Measurable? | Benchmark? | Existing code? | `[EXECUTOR]`? |
+|---|---|---|---|---|
+| Refactor payment module | ✅ Complexity | ✅ `lint --complexity` | ✅ Yes | ✅ autoresearch |
+| Implement login screen | ❌ Binary | ❌ | ❌ New | ❌ Worker |
+| Optimize search query | ✅ P95 latency | ✅ Load test | ✅ Yes | ✅ autoresearch |
+| Create new dashboard | ❌ Visual quality | ❌ | ❌ New | ❌ Worker |
+| Fix auth bug | ❌ Binary | ❌ | ✅ Yes | ❌ Worker |
+
+---
+
+## Scope Detail Template
+
+For each scope, generate:
+- **type**: `feature` | `optimization` | `spike`
+- **objective**
+- **implementation rationale**
+- **dependencies**
+- **technical considerations**
+- **Definition of Done**
+- **acceptance criteria**
+- **metric** (required when executor is `autoresearch`, optional otherwise): the measurable target with unit and direction, e.g. `API P95 latency < 200ms (lower is better)`, `complexity < 10 (lower is better)`
+- **rollout implications**
+
+---
+
+## Sequencing Principles (Principles 0-6)
+
+These principles guide the ordering of tasks within each scope. Apply them in sequence when building the detailed task breakdown.
+
+### Principle 0: External Interface Mocks
+Create mocks for external interfaces first. This allows development to proceed without waiting for external dependencies.
+
+### Principle 1: Internal API Mocks
+Create internal API mocks to enable parallel development of UI and backend components.
+
+### Principle 2: Key Enablers
+Identify and implement key enablers—foundational components that unlock multiple downstream tasks.
+
+### Principle 3: High-Risk Mitigation
+Identify and address high-risk technical tasks early. Introduce `[spike]` tasks before implementation when uncertainty is fundamental.
+
+### Principle 4: Smart Unblocking for Cross-Scope Risks
+Position tasks that unblock risks in subsequent scopes strategically.
+
+### Principle 5: Incremental Functionality
+Position "nice-to-have" tasks toward the end of the sequence. Do not suggest new nice-to-have tasks.
+
+### Principle 6: Dependencies and Clear Naming
+Order remaining tasks based on their dependencies. Ensure task names are clear and descriptive.
+
+---
+
+## Scope Sequencing Rules
+
+1. The first scope should typically establish core domain foundations, enabling architecture, and workflow backbone.
+2. Scopes should optimize for vertical coherence, deployment safety, operational independence, and incremental validation.
+
+Apply the sequencing principles (references/principles.md) for detailed task ordering within each scope.
