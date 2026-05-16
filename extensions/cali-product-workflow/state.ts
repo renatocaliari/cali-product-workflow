@@ -1,7 +1,7 @@
-import { existsSync, readFileSync, writeFileSync, statSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync, statSync, readdirSync } from "node:fs";
 import { join, basename, dirname, extname } from "node:path";
 import type { Workflow, TrackingData, ParsedInput } from "./types";
-import { TRACKING_FILE, GLOBAL_TRACKING_FILE, SCHEMA_URL } from "./types";
+import { TRACKING_FILE, GLOBAL_TRACKING_FILE, SCHEMA_URL, PHASE_NAMES } from "./types";
 
 // ── Shared State ─────────────────────────────────────────────────────
 
@@ -195,6 +195,116 @@ export function renameWorkflow(
   }
 
   return { ok: true };
+}
+
+// ── Scan workflow directories from disk ─────────────────────────────
+
+interface DiskWorkflow {
+  slug: string;
+  status: string;
+  currentPhase: number;
+  created: string;
+  updated: string;
+  draftContent?: string;
+  dirHash: string;
+  dateStamp: string;
+  artifacts: Record<string, unknown>;
+}
+
+/**
+ * Scan product-workflow/<date>/<dirHash>/index.json on disk and return
+ * all workflow entries found, regardless of what the tracking file says.
+ */
+export function scanWorkflowDirs(cwd: string): DiskWorkflow[] {
+  const result: DiskWorkflow[] = [];
+  const base = join(cwd, WORKFLOW_DIR);
+  if (!existsSync(base)) return result;
+
+  try {
+    const dateDirs = readdirSafe(base);
+    for (const dateDir of dateDirs) {
+      if (!dateDir.match(/^\d{4}-\d{2}-\d{2}$/)) continue;
+      const datePath = join(base, dateDir);
+      const wfDirs = readdirSafe(datePath);
+      for (const wfDir of wfDirs) {
+        const indexPath = join(datePath, wfDir, "index.json");
+        if (!existsSync(indexPath)) continue;
+        try {
+          const raw = JSON.parse(readFileSync(indexPath, "utf-8"));
+          result.push({
+            slug: raw.slug || wfDir,
+            status: raw.workflow_status || "unknown",
+            currentPhase: raw.current_phase_index ?? 0,
+            created: raw.created_at || "",
+            updated: raw.updated_at || "",
+            draftContent: raw.draft,
+            dirHash: wfDir,
+            dateStamp: dateDir,
+            artifacts: raw.artifacts || {},
+          });
+        } catch { /* skip corrupt index */ }
+      }
+    }
+  } catch { /* skip unreadable */ }
+
+  return result;
+}
+
+/**
+ * Reconcile workflows found on disk with the local tracking file.
+ * Any disk workflow not present in tracking is added as "orphan" in tracking.
+ * Returns the reconciled list (tracking + newly-imported orphans).
+ */
+export function reconcileTracking(cwd: string): Workflow[] {
+  const tracking = readTracking(cwd);
+  const known = tracking ? [...tracking.workflows] : [];
+  const diskWfs = scanWorkflowDirs(cwd);
+
+  let changed = false;
+  for (const dw of diskWfs) {
+    const exists = known.some(w => w.slug === dw.slug);
+    if (!exists) {
+      // Convert DiskWorkflow → Workflow and add to tracking
+      const wf: Workflow = {
+        slug: dw.slug,
+        description: "",
+        draftContent: dw.draftContent,
+        status: dw.status,
+        currentPhase: dw.currentPhase,
+        phases: PHASE_NAMES.map((name, i) => ({
+          id: `${i}-${name.toLowerCase()}`,
+          name,
+          status: i < dw.currentPhase ? "completed" : i === dw.currentPhase ? "in-progress" : "pending",
+        })),
+        created: dw.created || new Date().toISOString(),
+        updated: dw.updated || new Date().toISOString(),
+        cwd,
+      };
+      known.push(wf);
+      changed = true;
+    }
+  }
+
+  if (changed) {
+    const t = tracking || {
+      $schema: SCHEMA_URL,
+      version: "1.0",
+      created: new Date().toISOString(),
+      updated: new Date().toISOString(),
+      workflows: [],
+    };
+    t.workflows = known;
+    t.updated = new Date().toISOString();
+    writeTracking(cwd, t);
+  }
+
+  return known;
+}
+
+/** Safe directory listing that returns [] on error. */
+function readdirSafe(dir: string): string[] {
+  try { return readdirSync(dir); }
+  catch { return []; }
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────

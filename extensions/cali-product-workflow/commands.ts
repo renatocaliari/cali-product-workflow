@@ -1,8 +1,9 @@
+import { homedir } from "node:os";
 import type { ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
 import { PHASE_NAMES } from "./types";
 import {
   readTracking, writeTracking, readGlobalTracking, writeGlobalTracking,
-  getActiveWorkflow, renameWorkflow, slugify
+  getActiveWorkflow, renameWorkflow, slugify, reconcileTracking, scanWorkflowDirs
 } from "./state";
 import { updateFooter, notifyPhase, showOverlay } from "./ui";
 import cmdStart from "./start";
@@ -177,24 +178,95 @@ function cmdStatus(_pi: ExtensionAPI, _args: string, ctx: CmdCtx) {
 
 // ── LIST ─────────────────────────────────────────────────────────────
 
-function cmdList(_pi: ExtensionAPI, _args: string, ctx: CmdCtx) {
+function cmdList(_pi: ExtensionAPI, args: string, ctx: CmdCtx) {
+  const parsed = parseArgs(args);
   const lines: string[] = [];
-  const t = readTracking(ctx.cwd);
 
-  if (t && t.workflows.length > 0) {
-    lines.push("📁 Current Project:");
-    for (const w of t.workflows) {
+  // ── /pw:ls path=... ────────────────────────────────────────────
+  if (parsed.path) {
+    const targetDir = parsed.path;
+    const diskWfs = scanWorkflowDirs(targetDir);
+    if (diskWfs.length === 0) {
+      replyWarn(ctx, `No workflows in: ${targetDir}`);
+      return;
+    }
+    lines.push(`📁 ${targetDir}:`);
+    for (const dw of diskWfs) {
+      const icon = dw.status === "in-progress" ? "◆" :
+        dw.status === "paused" ? "⏸" :
+        dw.status === "completed" ? "✓" : "○";
+      lines.push(`  ${icon} ${dw.slug} — ${PHASE_NAMES[dw.currentPhase] || "?"} (${dw.status})`);
+    }
+    reply(ctx, lines.join("\n"));
+    return;
+  }
+
+  // ── /pw:ls all ─────────────────────────────────────────────────
+  if (parsed._.includes("all") || parsed.all !== undefined) {
+    // Scan all directories that have product-workflow/ subfolders
+    const globalTracking = readGlobalTracking();
+    const allProjects = new Map<string, string[]>();  // dir → [slug, ...]
+
+    // Collect from global tracking
+    if (globalTracking) {
+      for (const w of globalTracking.workflows) {
+        const dir = w.cwd || "?";
+        if (!allProjects.has(dir)) allProjects.set(dir, []);
+        allProjects.get(dir)!.push(w.slug);
+      }
+    }
+
+    // Also scan product-workflow/ in known common dirs
+    const homeDev = homedir() + "/Development";
+    const candidates = [
+      ctx.cwd,
+      homeDev,
+      ...Array.from(allProjects.keys()).filter(d => d !== "?" && d !== ctx.cwd && d !== homeDev),
+    ];
+    const seen = new Set<string>();
+    for (const dir of [...new Set(candidates)]) {
+      const diskWfs = scanWorkflowDirs(dir);
+      if (diskWfs.length === 0) continue;
+      lines.push(`📁 ${dir}:`);
+      for (const dw of diskWfs) {
+        if (seen.has(dw.slug)) continue;
+        seen.add(dw.slug);
+        const icon = dw.status === "in-progress" ? "◆" :
+          dw.status === "paused" ? "⏸" :
+          dw.status === "completed" ? "✓" : "○";
+        lines.push(`  ${icon} ${dw.slug} — ${PHASE_NAMES[dw.currentPhase] || "?"} (${dw.status})`);
+      }
+      lines.push("");
+    }
+
+    if (lines.length === 0) {
+      replyWarn(ctx, "No Workflows found anywhere.");
+    } else {
+      reply(ctx, lines.join("\n").trimEnd());
+    }
+    return;
+  }
+
+  // ── /pw:ls (default) — current dir with disk reconciliation ────
+  const reconciled = reconcileTracking(ctx.cwd);
+
+  if (reconciled.length > 0) {
+    lines.push(`📁 ${ctx.cwd}:`);
+    for (const w of reconciled) {
       const icon = w.status === "in-progress" ? "◆" :
         w.status === "paused" ? "⏸" :
         w.status === "completed" ? "✓" : "○";
-      lines.push(`  ${icon} ${w.slug} — ${PHASE_NAMES[w.currentPhase]} (${w.status})`);
+      const note = w.status === "archived" ? " (archived)" : "";
+      lines.push(`  ${icon} ${w.slug} — ${PHASE_NAMES[w.currentPhase]}${note}`);
     }
     lines.push("");
   }
 
+  // Append other-projects section from global tracking (not in current dir)
   const gt = readGlobalTracking();
   if (gt) {
-    const other = gt.workflows.filter(gw => !t?.workflows.some(tw => tw.slug === gw.slug));
+    const currentSlugs = new Set(reconciled.map(w => w.slug));
+    const other = gt.workflows.filter(gw => !currentSlugs.has(gw.slug));
     if (other.length > 0) {
       lines.push("🌐 Other Projects:");
       for (const w of other) {
