@@ -23,28 +23,43 @@ Complete product workflow package for pi.dev coding agent. Includes **15 special
 
 ## 🎮 Commands
 
-All commands use the `/product-workflow-` prefix:
+All commands use the `/product-workflow-` prefix. Short `/pw:` aliases also work:
 
-| Command | Description |
-|---------|-------------|
-| `/product-workflow-start` | Start workflow. Parses `@filename` and text as draft. |
-| `/product-workflow-stop` | **Stop** and clear UI immediately. |
-| `/product-workflow-pause` | Pause (keeps state). |
-| `/product-workflow-resume` | Resume paused. Optional: `slug=myname` |
-| `/product-workflow-status` | Show current status. |
-| `/product-workflow-list` | List all workflows (project + global). |
-| `/product-workflow-setphase phase=N` | Set phase (0-6). |
-| `/product-workflow-next` | Advance to next phase. |
-| `/product-workflow-complete` | Mark as completed. |
-| `/product-workflow-goto` | Navigate to workflow in another project. |
+| Command | Description | Alias |
+|---------|-------------|-------|
+| `/product-workflow-start` | Start workflow. Parses `@filename` and text as draft. | `/pw:start` |
+| `/product-workflow-stop` | **Stop** and clear UI immediately. | `/pw:stop` |
+| `/product-workflow-pause` | Pause (keeps state). | `/pw:pause` |
+| `/product-workflow-resume` | Resume paused. Optional: `slug=myname` | `/pw:resume` |
+| `/product-workflow-status` | Show current status. | `/pw:status` |
+| `/product-workflow-list` | List all workflows (project + global). | `/pw:ls` |
+| `/product-workflow-setphase phase=N` | Set phase (0-6). | `/pw:setphase` |
+| `/product-workflow-next` | Advance to next phase. | `/pw:next` |
+| `/product-workflow-complete` | Mark as completed. | `/pw:complete` |
+| `/product-workflow-goto` | Navigate to workflow in another project. | `/pw:goto` |
+| `/product-workflow-rename name=X` | Rename workflow slug. | `/pw:rename` |
+| `/product-workflow-menu` | Open interactive overlay (phase list + actions). | `/pw:menu` |
+| `/product-workflow-clean` | Archive orphaned/stalled workflows. | `/pw:clean` |
 
 ### Input Parsing Examples
 
 ```
-/product-workflow-start                       → Random slug
+/product-workflow-start                       → Placeholder slug "untitled-1"
 /product-workflow-start @brief.md             → Slug from filename
 /product-workflow-start Login flow            → Slug from text
 /product-workflow-start @spec.md "OAuth"       → Both file and draft
+/pw:start                                     → Same as above
+```
+
+> 💡 **Smart slug:** If no slug is provided, starts as `untitled-N`.
+> After the Clarify phase completes, the extension automatically renames
+> the workflow based on context (via `autoRenameFromDraft`).
+
+### Cleanup
+
+```
+/pw:clean           → Archive workflows stalled >4h
+/pw:clean hours=24  → Custom stall threshold
 ```
 
 ---
@@ -78,41 +93,63 @@ Clarify → Shape → Interface → Critique → Gate → Planning → Execution
 
 ## 🖥️ TUI Updates
 
-When a workflow is active, the **TUI updates automatically** as the skill progresses through stages.
+When a workflow is active, the **TUI is automatically updated** as the skill progresses.
+
+The TUI is designed to be **compact and glanceable** — a single line in the footer
+with the workflow slug, current phase, and contextual info.
 
 ### What Triggers Updates
 
 | Trigger | TUI Change | Example |
 |---------|-----------|---------|
-| `/product-workflow-start` | **Adds** footer + widget | `▶ auth-system [Shape]` |
-| Skill advances phase | **Updates** footer + widget | `▶ auth-system [Interface]` |
+| `/product-workflow-start` | **Adds** compact footer | `auth-system │ ◆ Shape 3/7 │ 3 assumptions` |
+| Skill advances phase | **Updates** footer | `auth-system │ ◆ Interface 3/7 │ 5 proposals` |
 | `/product-workflow-pause` | Footer changes to PAUSED | `⏸ auth-system` |
-| `/product-workflow-resume` | Footer returns to normal | `▶ auth-system [Shape]` |
-| `/product-workflow-stop` | **Removes** footer + widget | Cleared |
-| `/product-workflow-complete` | **Removes** footer + widget | Cleared |
-| New session (workflow exists) | **Restores** footer + widget | Same as start |
-| Phase transition | **Toast notification** | `▶ Workflow: auth — Phase 2: Interface` |
+| `/product-workflow-resume` | Footer returns to normal | `auth-system │ ◆ Shape 3/7 │ ...` |
+| `/product-workflow-stop` | **Removes** footer | Cleared |
+| `/product-workflow-complete` | **Removes** footer | Cleared |
+| Auto-rename (pós-Clarify) | Slug updates in-place | `untitled-1 → auth-system` |
+| Phase transition | **Toast notification** | `◆ auth-system — entered Interface (3/7)` |
 
 ### TUI Visual
 
-**Active Workflow:**
+**Active Workflow (compact footer):**
 ```
-┌─────────────────────────────────────────────────────┐
-│  ▶ Workflow:                                        │
-│    auth-system                                      │
-│    Phase: 2/7                                       │
-│    Stage: Interface                                 │
-│                                                     │
-│  ✓ Clarify  ▶ Interface  ○ Critique  ○ Gate  ...   │
-└─────────────────────────────────────────────────────┘
-│  ▶ auth-system [Interface]                         │  ← Footer
-└─────────────────────────────────────────────────────┘
+│ auth-system  │  ◆ Shape 3/7  │  2 assumptions  │  /pw:menu for details
+└─────────────────────────────────────────────────────────────────────
+```
+
+**Active Workflow (with artifacts):**
+```
+│ auth-system  │  ◆ Interface 3/7  │  5 proposals · hybrid:C  │  /pw:menu
+└─────────────────────────────────────────────────────────────────────────
 ```
 
 **Paused:**
 ```
-│  ⏸ auth-system                                     │  ← Footer (warning color)
-└─────────────────────────────────────────────────────┘
+│ ⏸ auth-system                                       │  ← Footer (warning)
+└─────────────────────────────────────────────────────────────────────
+```
+
+### Interactive Overlay
+
+Use `/pw:menu` or `/product-workflow-menu` to open the **interactive overlay** —
+a focused dialog with the complete phase list, navigation, and quick actions.
+
+```
+╔═══════════════════════════════════╗
+║  ◆ auth-system                    ║
+║                                   ║
+║  ✓ Clarify                       ║
+║  ◆ Shape   ← current             ║
+║  ○ Interface                     ║
+║  ○ Critique                      ║
+║  ○ Gate                          ║
+║  ○ Planning                      ║
+║  ○ Execution                     ║
+║                                   ║
+║  ↑↓ navigate  n:next  s:stop     ║
+╚═══════════════════════════════════╝
 ```
 
 ### How Updates Work

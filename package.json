@@ -1,16 +1,16 @@
 {
   "name": "@renatocaliari/pi-product-workflow",
   "version": "0.1.0-alpha",
-  "description": "Product workflow for pi.dev: Shape Up + Interface + Tech Planning + Critique + Gate. Includes 15 product skills: workflow, short-cycle, opportunity-mapping, job-to-be-done, evolutionary, ads, business-models, health, marketplace-playbook, open-source, pricing, promotions, trust-building, multi-method-market-analysis, scope-executor. Integrates with pi-subagents (nicobailon), pi-goal (capyup), plannotator (backnotprop), autoresearch (davebcn87), ask-user-question (juicesharp), intercom (nicobailon), and supervisor (tintinweb)."
+  "description": "Product workflow for pi.dev: Shape Up + Interface + Tech Planning + Critique + Gate. Includes 15 product skills: workflow, short-cycle, opportunity-mapping, job-to-be-done, evolutionary, ads, business-models, health, marketplace-playbook, open-source, pricing, promotions, trust-building, multi-method-market-analysis, scope-executor. Integrates with pi-subagents (nicobailon), pi-goal (capyup), plannotator (backnotprop), autoresearch (davebcn87), ask-user-question (juicesharp), intercom (nicobailon), supervisor (tintinweb), and pi-agent-codebase-workflows (PriNova).",
   "keywords": [
     "pi-package",
     "pi-skill",
     "pi-extension",
     "workflow",
-    "product",
     "shape-up",
     "product-planning",
-    "product-management"
+    "product-management",
+    "safe-change"
   ],
   "license": "MIT",
   "author": "Cali",
@@ -53,7 +53,8 @@
     "pi-autoresearch": ">=0.1.0",
     "@juicesharp/rpiv-ask-user-question": ">=1.6.0",
     "pi-intercom": ">=0.6.0",
-    "pi-supervisor": ">=0.4.0"
+    "pi-supervisor": ">=0.4.0",
+    "pi-agent-codebase-workflows": "*"
   },
   "optionalPeerDependencies": {
     "cali-short-cycle-product": "*",

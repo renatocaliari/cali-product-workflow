@@ -14,10 +14,10 @@ description: >
 
   Skills externas embebidas (com créditos preservados):
   - Audit/Critique frameworks (impeccable ecosystem)
-  - JTBD Framework (cali-product-job-to-be-done)
-  - Evolutionary Principles (cali-product-evolutionary-principles)
-  - Opportunity Mapping (cali-product-opportunity-mapping)
-  - Short-Cycle Product Method (cali-product-short-cycle)
+  - JTBD Framework (cali-job-to-be-done-framework)
+  - Evolutionary Principles (cali-evolutionary-principles)
+  - Opportunity Mapping (cali-opportunity-mapping)
+  - Short-Cycle Product Method (cali-short-cycle-product)
 ---
 
 # Product Planner
@@ -29,6 +29,27 @@ NUNCA pule nenhuma fase. Siga a sequência abaixo.
 Se uma ferramenta mencionada não estiver disponível no seu ambiente,
 consulte o bloco **Adaptação por Ambiente** no final deste arquivo
 para encontrar o equivalente.
+
+---
+
+## 🔧 Ferramentas e Packages
+
+Mantenha os nomes de package **exatos** — o pi pode ter múltiplas extensões
+com a mesma tool name:
+
+| Tool (referência no fluxo) | Package (npm) | Uso principal |
+|---|---|---|
+| `subagent` | **pi-subagents** (nicobailon) | Delegar tarefas paralelas |
+| `ask_user_question` | **@juicesharp/rpiv-ask-user-question** | Perguntas estruturadas ao usuário |
+| `plannotator annotate --gate` | **@plannotator/pi-extension** (backnotprop) | Revisão visual com gate de aprovação |
+| `/skill:autoresearch-create` | **pi-autoresearch** (davebcn87) | Loop de otimização por métrica |
+| `/sisyphus`, `/goal`, `pause_goal` | **@capyup/pi-goal** | Ordered steps com completion audit |
+| `intercom` | **pi-intercom** (nicobailon) | Comunicação entre sessões pi |
+| `/supervise` | **pi-supervisor** (tintinweb) | Steering de execução contra desvio |
+| `safe-change` | **pi-agent-codebase-workflows** (PriNova) | Verificação de regressão |
+
+> 💡 No texto do workflow, as tools são referidas pelo nome (ex: `subagent`,
+> `plannotator`). Use SEMPRE o package correspondente da tabela acima.
 
 ---
 
@@ -78,10 +99,14 @@ Todo artifact do workflow é persistido em `product-workflow/` para:
 - Resume entre sessões
 - Checkpoint para crash recovery
 
+> **Paths:** Use `{_dir}` (stable directory name = initial slug) for ALL filesystem paths.
+> Use `{slug}` (may change via rename) ONLY for display.
+> See index.json schema below for both fields.
+
 ```
 product-workflow/
 └── {YYYY-MM-DD}/
-    └── {slug}/
+    └── {_dir}/            # = initial slug (stable, never changes on rename)
         ├── index.json                  # Artifact index (auto-discovery)
         ├── specs/
         │   └── spec-product_{v}.md      # Shape Up output
@@ -105,7 +130,8 @@ product-workflow/
   "version": "1.0",
   "created_at": "2026-05-15T10:00:00Z",
   "updated_at": "2026-05-15T14:30:00Z",
-  "slug": "auth-system",
+  "slug": "auth-system",    // display name (can change via rename)
+  "_dir": "auth-system",     // stable directory name (= initial slug)
   "workflow_status": "in-progress|completed|cancelled",
   "current_phase": "shape-up|interface|tech-planning|execution",
   "artifacts": {
@@ -140,7 +166,7 @@ product-workflow/
 
 
 **`initWorkflow(dir)`** — Inicializa estrutura de diretórios
-- Cria `product-workflow/{date}/{slug}/` com subdirs
+- Cria `product-workflow/{date}/{_dir}/` com subdirs
 - Cria `index.json` inicial
 
 **`updateIndex(updates)`** — Atualiza index.json
@@ -164,52 +190,79 @@ product-workflow/
 **ANTES de perguntar qualquer coisa ao usuário**, execute:
 
 ```bash
-# Verifica se existe work in progress
-if [ -f "product-workflow/*/*/index.json" ]; then
-  echo "EXISTING_WORKFLOW_DETECTED"
-  cat product-workflow/*/*/index.json
-else
+# Find only in-progress workflows (filters out orphaned/completed/archived)
+count=0
+for f in product-workflow/*/*/index.json; do
+  if [ -f "$f" ] && grep -q '"workflow_status"[[:space:]]*:[[:space:]]*"in-progress"' "$f" 2>/dev/null; then
+    echo "ACTIVE_WORKFLOW_FOUND:$f"
+    cat "$f"
+    count=$((count + 1))
+  fi
+done
+if [ "$count" -eq 0 ]; then
   echo "NEW_WORKFLOW"
 fi
 ```
 
-**Se existir work in progress**:
-1. Leia o `index.json` encontrado
-2. Mostre ao usuário: "Você tem um workflow em andamento: {slug} ({current_phase})"
-3. Pergunte:
+> ⚠️ Nota: A extensão `/product-workflow-start` já executa um overlay de cleanup
+> **antes** de criar o workflow, arquivando workflows órfãos. A esta altura
+> deve haver no máximo 1 workflow ativo. Se houver mais, investigue.
+
+**Se existir work in progress (1 ou mais)**:
+1. Leia os `index.json` encontrados
+2. Se houver **apenas 1**: mostre "Workflow ativo: {slug} ({current_phase})" e pergunte:
 ```typescript
 ask_user_question({
   questions: [{
-    question: `O que deseja fazer com o workflow existente?`,
+    question: `Workflow "{slug}" está em andamento na fase {current_phase}. Continuar?`,
     header: "Resume",
     options: [
       {
         label: "Continuar de onde parou (Recomendado)",
-        description: `Resume da fase: {current_phase}. Artifacts existentes serão carregados.`
+        description: `Resume da fase {current_phase}. Artifacts existentes preservados.`
       },
       {
-        label: "Iniciar novo workflow",
-        description: `Cancela o workflow atual e inicia um novo. Artifacts antigos permanecem em disco.`
-      },
-      {
-        label: "Apenas ver status",
+        label: "Ver status detalhado",
         description: `Mostrar artifacts e fases sem prosseguir.`
+      },
+      {
+        label: "Cancelar workflow",
+        description: `Arquiva e começa do zero. Use /pw:start para novo.`
       }
     ]
   }]
 })
 ```
-4. Se "Continuar": carregue checkpoint e retome da fase atual
-5. Se "Novo": inicialize nova estrutura (artifacts antigos são preservados)
-
+3. Se houver **múltiplos workflows ativos**: mostre a lista e recomende `/pw:clean`:
+```typescript
+ask_user_question({
+  questions: [{
+    question: `Há ${count} workflows ativos. Use /pw:clean para organizar ou selecione:Continue para: ${slug}`,
+    header: "Múltiplos",
+    options: [
+      {
+        label: `Continuar "${slug}"`,
+        description: `Ignora os demais e foca neste.`
+      },
+      {
+        label: "Listar todos",
+        description: `Ver todos os workflows ativos.`
+      },
+      {
+        label: "Rodar /pw:clean",
+        description: `Arquivar workflows órfãos/stalled.`
+      }
+    ]
+  }]
+})
+```
 
 **Se novo workflow**:
 1. Continue para 0a. Workflow Steps normalmente
 
 ### 0a. Workflow Steps
 
-Pergunte ao usuário sobre as etapas do workflow E sobre safe-change:
-Pergunte ao usuário sobre as etapas do workflow E sobre safe-change:
+Pergunte ao usuário sobre as etapas do workflow E sobre safe-change (**pi-agent-codebase-workflows/PriNova**):
 
 ```typescript
 ask_user_question({
@@ -244,7 +297,7 @@ Esta verificação ajuda a identificar regressões ou problemas antes de planeja
     options: [
       {
         label: "Sim — rodar safe-change (Recomendado)",
-        description: "+ Verifica regressões automaticamente | + Catch problemas antes de planejar | - ~2-5 min extra"
+        description: "+ Verifica regressões automaticamente | + Catch problemas antes de planejar | - ~2-5 min extra\n  → Executa safe-change do package pi-agent-codebase-workflows (PriNova)"
       },
       {
         label: "Não — seguir direto",
@@ -255,7 +308,7 @@ Esta verificação ajuda a identificar regressões ou problemas antes de planeja
 })
 ```
 **Se usuário escolhe "Sim" para safe-change:**
-Rode \`safe-change\` (ou equivalente do ambiente) ANTES de prosseguir com as fases.
+Rode \`safe-change\` do **pi-agent-codebase-workflows** (PriNova) ANTES de prosseguir com as fases.
 
 **Se usuário escolhe "Não":** prossegue direto para Fase 0b.
 
@@ -265,142 +318,15 @@ mas safe-change ainda é oferecido.
 ### 0b. Exploração Estratégica (opcional)
 
 **Detecte sinais** de que o usuário quer explorar direções estratégicas:
-- "como podemos evoluir", "novas features", "ideias para o produto"
-- "o que construir", "oportunidades", "estratégia"
-- Qualquer menção a JTBD, jobs-to-be-done, evolutionary, opportunity mapping
+- "como evoluir", "novas features", "oportunidades", "estratégia"
+- JTBD, jobs-to-be-done, evolutionary, opportunity mapping, short-cycle, market analysis
 
-**Se detectado, pergunte:**
+**Se detectado:** leia `references/strategic-exploration.md` e siga as instruções.
 
-```typescript
-ask_user_question({
-  questions: [{
-    question: `Selecione se deseja executar mais abordagens estratégicas antes do planejamento de produto. Se não selecionar nenhuma, o Shape Up começará diretamente.`,
-    header: "Abordagens",
-    multiSelect: true,
-    options: [
-      {
-        label: "Job-to-Be-Done Framework",
-        description: "Análise de jobs funcionais, emocionais e sociais dos usuários. Identifica necessidades não declaradas e variáveis situacionais."
-      },
-      {
-        label: "Evolutionary Product Thinking",
-        description: "Análise de stepping-stones, evolutionary forces e opções de evolução do produto. Preserva optionality e evita convergência prematura."
-      },
-      {
-        label: "Opportunity Mapping",
-        description: "Mapeamento de oportunidades ranked por impacto e esforço. Identifica quick wins e strategic bets."
-      },
-      {
-        label: "Short-Cycle Product Method",
-        description: "Validação de ideias com experimentos pequenos e rápidos. Antes de construir, teste. Métricas, canais, pricing, modelo de negócio."
-      },
-      {
-        label: "Multi-Method Market Analysis",
-        description: "Análise profunda de mercado usando PESTLE, Wardley Maps, Delphi e Foresight. Entenda o cenário competitivo e tendências futuras."
-      }
-    ]
-  }]
-})
-```
+**Se não detectado ou usuário recusar:** prossiga direto para Fase 1.
 
-**Se usuário selecionar uma ou mais opções:**
-
-1. **Roda skills em paralelo** (subagent por skill):
-   - `cali-product-job-to-be-done` para JTBD
-   - `cali-product-evolutionary-principles` para Evolutionary
-   - `cali-product-opportunity-mapping` para Opportunity Mapping
-   - `cali-product-short-cycle` para Short-Cycle (experimentos, pricing, canais, modelo)
-   - `cali-product-multi-method-market-analysis` para Multi-Method Market Analysis
-
-2. **Gera arquivos individuais:**
-   ```
-   product-workflow/{YYYY-MM-DD}/{slug}/
-   ├── jtbd-analysis.md
-   ├── evolutionary-analysis.md
-   ├── opportunity-mapping.md
-   ├── short-cycle-analysis.md
-   └── market-analysis.md
-   ```
-
-3. **Gera consolidated executive summary:**
-   ```typescript
-   subagent({
-     task: `Consolide os 4 arquivos de análise estratégica em um único
-     executive summary com:
-
-1. Executive Summary (consolidated, 10-15 bullets max)
-   - JTBD highlights (top 5 insights)
-   - Evolutionary highlights (top 5 insights)
-   - Opportunity Mapping highlights (top 5 insights)
-   - Short-Cycle highlights (top 5 insights)
-   - Market Analysis highlights (top 5 insights)
-
-2. Links para arquivos completos:
-   - [JTBD Analysis](./jtbd-analysis.md)
-   - [Evolutionary Analysis](./evolutionary-analysis.md)
-   - [Opportunity Mapping](./opportunity-mapping.md)
-   - [Short-Cycle Analysis](./short-cycle-analysis.md)
-   - [Market Analysis](./market-analysis.md)
-
-3. Top Opportunities (consolidated across all 4)
-
-4. Recommended Focus Areas (actionable for Shape Up)
-Preserve credits at bottom referencing each skill's author.`,
-     output: "product-workflow/{YYYY-MM-DD}/{slug}/strategic-insights.md",
-     reads: [
-       "product-workflow/{YYYY-MM-DD}/{slug}/jtbd-analysis.md",
-       "product-workflow/{YYYY-MM-DD}/{slug}/evolutionary-analysis.md",
-       "product-workflow/{YYYY-MM-DD}/{slug}/opportunity-mapping.md",
-       "product-workflow/{YYYY-MM-DD}/{slug}/short-cycle-analysis.md"
-     ],
-     context: "fresh"
-   })
-   ```
-
-4. **Mostra resumo na conversa** com links para arquivos completos
-
-5. **Pergunta de integração GRANULAR** (por skill):
-
-   Para cada skill executada, use `ask_user_question` com multiSelect
-   apresentando os principais insights como opções:
-
-   ```typescript
-   // Exemplo para JTBD
-   ask_user_question({
-     questions: [{
-       question: `JTBD — Selecione os insights que deseja incorporar ao Shape Up:`,
-       header: "JTBD Insights",
-       multiSelect: true,
-       options: [
-         {
-           label: "Job: 'Importar dados semanalmente'",
-           description: "Situational: frequência semanal, volume variável, múltiplos formatos. Functional needs: validação, preview, retry."
-         },
-         {
-           label: "Job: 'Compartilhar relatório com time'",
-           description: "Emotional: confiar que todos viram. Social: status e accountability."
-         },
-         {
-           label: "Thinking Style: 'Precisão > Velocidade'",
-           description: "Usuários preferem dados corretos mesmo que processo seja mais lento."
-         }
-       ]
-     }]
-   })
-   ```
-
-   Repita para Evolutionary e Opportunity Mapping com seus respectivos insights.
-
-   **Se usuário não selecionar nenhum insight de um skill:**
-   - Ignore aquele skill na integração
-   - Prossiga para próxima pergunta ou Shape Up
-
-6. **Integra insights selecionados no Shape Up:**
-   - Insights escolhidos são injetados como contexto adicional
-   - Geram seções extras no spec-product.md (ex: `## Jobs Considerados`)
-   - Shape Up referencia jobs/oportunidades específicos
-
-**Se usuário não selecionar nenhuma opção:** prossegue direto para Fase 1.
+> O conteúdo completo foi extraído para `references/strategic-exploration.md`
+> para reduzir o tamanho deste arquivo. Leia-o APENAS se necessário.
 
 ### Regras de encadeamento automático
 
@@ -436,14 +362,14 @@ subagent({
       agent: "scout",
       task: `Mapeie o estado atual do código relacionado a: [descrição].
 Identifique arquivos relevantes, fluxos existentes, e pontos de impacto.`,
-      output: "product-workflow/{YYYY-MM-DD}/{slug}/context/current-state.md",
+      output: "product-workflow/{YYYY-MM-DD}/{_dir}/context/current-state.md",
       context: "fresh"
     },
     {
       agent: "scout",
       task: `Mapeie riscos técnicos, dependências externas, e
 restrições para: [descrição].`,
-      output: "product-workflow/{YYYY-MM-DD}/{slug}/context/risks.md",
+      output: "product-workflow/{YYYY-MM-DD}/{_dir}/context/risks.md",
       context: "fresh"
     }
   ],
@@ -474,135 +400,33 @@ Use `ask_user_question` para perguntas estratégicas quando necessário
 (siga as regras de clarification-rules.md sobre quando perguntar).
 
 Após o shaping:
-- Salve em `product-workflow/{YYYY-MM-DD}/{slug}/plans/spec-product_{v}.md`
+- Salve em `product-workflow/{YYYY-MM-DD}/{_dir}/plans/spec-product_{v}.md`
 - Não pergunte sobre Interface Brainstorming — já foi decidido no Fase 0
 
 ### 1c. Ajuste de Escopo (após Shape Up)
 
-Após o Shape Up, mostre ao usuário a tabela de scopes definidos:
+Mostre a tabela de scopes DENTRO/FORA. Pergunte:
 
-```
-ESCOPOS DENTRO DO SHAPE UP:
-┌─────────────────────────────────────────────────────┐
-│ [✓] Auth via JWT com refresh tokens                │
-│ [✓] Cache de sessão no Redis                       │
-│ [✓] SSO integration                                │
-└─────────────────────────────────────────────────────┘
+1. **Remover scopes DENTRO?** — `ask_user_question` multiSelect com scopes atuais
+2. **Incluir scopes FORA?** — `ask_user_question` multiSelect com scopes fora
 
-ESCOPOS FORA DO SHAPE UP:
-┌─────────────────────────────────────────────────────┐
-│ [ ] MFA/Two-factor                                 │
-│ [ ] Login social (Google/GitHub)                   │
-│ [ ] Biometric authentication                       │
-└─────────────────────────────────────────────────────┘
-```
-
-**Pergunta para escopos DENTRO:**
-```typescript
-ask_user_question({
-  questions: [{
-    question: `Tem algum scope DENTRO do Shape Up que você quer **REMOVER**?
-Selecione os scopes que deseja remover. Se não selecionar nenhum, todos permanecem.`,
-    header: "Remover Escopos",
-    multiSelect: true,
-    options: [
-      {
-        label: "Remover: [scope name]",
-        description: "[descrição breve do scope]"
-      }
-      // ... opções geradas dinamicamente baseadas nos scopes DENTRO
-    ]
-  }]
-})
-```
-
-**Pergunta para escopos FORA:**
-```typescript
-ask_user_question({
-  questions: [{
-    question: `Tem algum scope FORA do Shape Up que você quer **INCLUIR**?
-Selecione os scopes que deseja adicionar ao escopo. Se não selecionar nenhum, permanecem fora.`,
-    header: "Incluir Escopos",
-    multiSelect: true,
-    options: [
-      {
-        label: "Incluir: [scope name]",
-        description: "[descrição breve do scope]"
-      }
-      // ... opções geradas dinamicamente baseadas nos scopes FORA
-    ]
-  }]
-})
-```
-
-**Se usuário não selecionar nenhuma opção em ambos:**
-- Prossegue com Shape Up original
-
-**Se usuário selecionar remoções e/ou inclusões:**
-- Cria `spec-product_{v+1}.md` com escopos ajustados
-- Documenta: scopes removidos (DENTRO → FORA) e adicionados (FORA → DENTRO)
+Se usuário não selecionar nada → prossegue com Shape Up original.
+Se houver remoções/inclusões → crie `spec-product_{v+1}.md` com escopos ajustados
+e documente o que mudou.
 
 
 ---
 
 ## Fase 2: Interface Brainstorming
 
-Leia **`references/interface/archetypes.md`** para os 5 arquétipos e regras.
-Leia **`references/interface/output-format.md`** para o formato esperado.
+Leia \`references/interface/archetypes.md\` (5 arquétipos) e \`references/interface/output-format.md\`.
 
-> 💡 **capyup/pi-goal integration:** Para scopes de interface complexos, considere usar
-> `/sisyphus` para garantir ordered steps e completion audit:
-> ```bash
-> /sisyphus Brainstorm 5 propostas de interface para [escopo] com todas as seções completas
-> ```
-> O Sisyphus mode garante que todas as 5 proposals (A-E) sejam geradas com
-> ASCII completo e verification em cada step. Útil quando o scope é grande
-> e você quer disciplina de completion audit.
+Gere as 5 propostas (A-E) via subagent \`worker\` (1 prompt, 5 propostas + híbrida):
+- Saída: \`product-workflow/{YYYY-MM-DD}/{_dir}/interfaces/interfaces_{v}.md\`
+- **Não peça input** — gere tudo de uma vez
 
-**Parallel execution (Phase C da implementação)**: 
-Quando possível, gere as 5 proposals (A-E) em paralelo usando subagents.
-Isso reduz o tempo de 5x sequential para ~1x parallel:
-
-```typescript
-subagent({
-  agent: "worker",
-  task: `Execute interface-brainstorming para: [descrição do escopo / problema].
-
-GERE PROPOSTA A — Minimal Core Interface:
-[Full archetype A content]
-
-GERE PROPOSTA B — Convention Alignment:
-[Full archetype B content]
-
-GERE PROPOSTA C — Progressive Disclosure:
-[Full archetype C content]
-
-GERE PROPOSTA D — Workflow Momentum:
-[Full archetype D content]
-
-GERE PROPOSTA E — Situational Adaptation:
-[Full archetype E content]
-
-Após as 5 propostas, gere a Recomendação Híbrida.
-
-NÃO peça input ao usuário — apenas gere o conteúdo completo.`,
-  output: "product-workflow/{YYYY-MM-DD}/{slug}/interfaces/interfaces_{v}.md",
-  context: "fresh"
-})
-```
-
-> **Nota de performance**: Subagent já executa em contexto separado, então
-a "parallelização" é automática. Apenas garanta que o prompt inclua TODAS
-as 5 proposals para evitar múltiplas chamadas.
-```
-
-Após concluir, **leia o output** e crie `spec-product_{v+1}.md` incorporando
-TODO o conteúdo (especialmente ASCII sketches) com base no
-`spec-product_{v}.md` atual. A interface selecionada vira a Fase 2 do spec.
-O spec anterior (`spec-product_{v}.md`) permanece inalterado como versão base.
-
-Use `ask_user_question` para a **seleção final** de direção
-apresentando as opções (H, A, B, C, D, E conforme archetypes.md).
+Após concluir, crie \`spec-product_{v+1}.md\` incorporando a interface escolhida
+(ASCII sketches). Use \`ask_user_question\` para seleção final (H, A, B, C, D, E).
 
 ---
 
@@ -610,76 +434,22 @@ apresentando as opções (H, A, B, C, D, E conforme archetypes.md).
 
 ### 3a. Análise via subagent
 
-Lance subagent `reviewer` que aplicará os checklists de plano:
-
-```typescript
-subagent({
-  agent: "reviewer",
-  task: `Analise gaps no spec-product.md usando os arquivos abaixo.
-
-Leia:
-- references/plan-critique/checklist-flows.md
-- references/plan-critique/checklist-states.md
-- references/plan-critique/checklist-affordances.md
-- references/plan-critique/checklist-data.md
-- references/plan-critique/checklist-system.md
-- references/plan-critique/checklist-feasibility.md
-- references/plan-critique/output-format.md
-
-Output:
-1. 🎯 Executive Summary
-2. 🚨 Critical Questions (Blocking)
-3. 🤔 Important Questions (Refinement)
-4. 🔎 Minor Clarifications
-5. ✅ Strengths
-
-NÃO resolva os gaps — apenas identifique, classifique e formate.`,
-  output: "product-workflow/{YYYY-MM-DD}/{slug}/plans/critique-report.md",
-  context: "fresh",
-  reads: ["product-workflow/{YYYY-MM-DD}/{slug}/plans/spec-product_{v}.md"]
-})
-```
+Lance subagent `reviewer` com os checklists de `references/plan-critique/`:
+- Leia: checklist-flows, checklist-states, checklist-affordances, checklist-data,
+  checklist-system, checklist-feasibility, output-format
+- Output: Executive Summary + Critical Questions (🚨) + Important (🤔) + Minor (🔎) + Strengths
+- **Não resolva gaps** — só identifique e classifique
+- Salve em `product-workflow/{YYYY-MM-DD}/{_dir}/plans/critique-report.md`
 
 ### 3b. Resolução de gaps
 
-Leia o `critique-report.md`.
+Pergunte modo: **Auto-resolve** (aplica regras de `auto-resolve-rules.md`) ou **Manual** (pergunta um a um).
 
-Use `ask_user_question` para perguntar o modo de resolução:
-
-```typescript
-ask_user_question({
-  question: "How should gaps in the plan be resolved?",
-  header: "Gap resolution",
-  options: [
-    {
-      label: "Auto-resolve (Recommended)",
-      description: "LLM applies best practices for all gaps and updates the plan — you review everything in the Review Gate"
-    },
-    {
-      label: "Ask me one by one",
-      description: "LLM asks about each gap individually with recommended options — more control, more steps"
-    }
-  ]
-})
-```
-
-**Se Auto-resolve:** Aplique as regras em `references/plan-critique/auto-resolve-rules.md`.
-Para cada gap 🚨 e 🤔, resolva com a melhor prática. 🔎 é sempre automático.
-
-**Transparência — gere o diff para o usuário:**
-Antes de aplicar as resoluções, salve uma cópia do spec atual como
-`spec-product_{v}-pre-critique.md`. Após aplicar as resoluções, crie
-`spec-product_{v+1}.md` com as resoluções e a seção
-"Resolved Gaps (Plan Critique)". Mostre ao usuário um resumo do que mudou
-— um bullet list das alterações feitas, não o diff completo. Pergunte se ele
-quer revisar antes de prosseguir. Isso evita que o usuário veja o Plannotator
-com mudanças que não sabe de onde vieram.
-
-**Se Manual:** Para cada gap 🚨 e 🤔, use `ask_user_question` com opções.
-🔎 é sempre automático. Uma pergunta por chamada de `ask_user_question`.
-
-Após resolver, crie `spec-product_{v+1}.md` com as resoluções e a seção
-"Resolved Gaps (Plan Critique)".
+- 🔎 é sempre automático
+- Auto-resolve: salve `spec-product_{v}-pre-critique.md`, crie `spec-product_{v+1}.md` com
+  seção "Resolved Gaps", e mostre resumo das mudanças ao usuário antes de prosseguir
+- Manual: pergunte cada 🚨 e 🤔 individualmente
+- Após resolver, crie `spec-product_{v+1}.md` com resoluções documentadas
 
 ---
 
@@ -691,7 +461,7 @@ Após resolver, crie `spec-product_{v+1}.md` com as resoluções e a seção
 
 ```bash
 # Extrai todos file:line refs do spec
-grep -E '`[^`]+:[0-9]+`' product-workflow/{YYYY-MM-DD}/{slug}/plans/spec-product_{v}.md | \
+grep -E '`[^`]+:[0-9]+`' product-workflow/{YYYY-MM-DD}/{_dir}/plans/spec-product_{v}.md | \
   sed 's/.*`\([^`]*:[0-9]*\).*/\1/' | \
   sort -u > /tmp/refs_to_verify.txt
 ```
@@ -739,7 +509,7 @@ DEPOIS do Plannotator retornar "aprovado".
 Submeta o spec-product.md revisado para aprovação:
 
 ```bash
-plannotator annotate product-workflow/{YYYY-MM-DD}/{slug}/plans/spec-product_{v}.md --gate
+plannotator annotate product-workflow/{YYYY-MM-DD}/{_dir}/plans/spec-product_{v}.md --gate
 ```
 
 **IMPORTANTE — Após aprovação, carimbe o spec:**
@@ -754,16 +524,16 @@ Assim que o Plannotator retornar "aprovado", faça:
    approved_via: plannotator --gate
    ```
 
-2. **Crie um receipt de aprovação** em `.plannotator/approvals/{slug}/spec-product_{v}.approved.md`:
+2. **Crie um receipt de aprovação** em `.plannotator/approvals/{_dir}/spec-product_{v}.approved.md`:
    ```bash
-   mkdir -p .plannotator/approvals/{slug} && cat > .plannotator/approvals/{slug}/spec-product_{v}.approved.md << 'EOF'
+   mkdir -p .plannotator/approvals/{_dir} && cat > .plannotator/approvals/{_dir}/spec-product_{v}.approved.md << 'EOF'
    # Aprovação: spec-product_{v}.md
    - Aprovado em: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
    - Hash do spec: `git hash-object docs/.../spec-product_{v}.md`
    - Veredito: approved
    EOF
    ```
-   Substitua `{slug}` e o path do spec pelo valor real do projeto.
+   Substitua `{_dir}` (directory name do index.json) e o path do spec pelo valor real do projeto.
 
 3. **Arquivo congelado:** Após o carimbo, o spec-product.md NÃO pode mais ser alterado.
    Qualquer revisão futura deve criar `spec-product_{v+1}.md`.
@@ -780,58 +550,28 @@ Assim que o Plannotator retornar "aprovado", faça:
 
 ### 5a. Geração dos scopes
 
-Lance subagent `planner` com as referências de tech-planning:
-
-```typescript
-subagent({
-  agent: "planner",
-  task: `Com base no spec-product.md aprovado, produza o plano técnico.
-
-Leia os arquivos de referência:
-- references/tech-planning/strategies.md: sequencing strategies + analysis modes
-- references/tech-planning/scope-types.md: tipos de escopo (feature/optimization/spike)
-- references/tech-planning/sequence-principles.md: 6 princípios de sequenciamento (0-6)
-- references/tech-planning/output-format.md: formato completo de output
-- references/tech-planning/risk-analysis.md: análise de riscos CTO
-- references/tech-planning/generation-principles.md: princípios de geração
+Leia `references/tech-planning/` (strategies, scope-types, sequence-principles,
+output-format, risk-analysis, generation-principles) e lance subagent `planner`:
 
 1. Verifique estabilidade estratégica (Step 0)
-2. Faça codebase awareness check (Step 1): verifique memória, explorações prévias, e arquitetura atual. Se necessário e possível, recomende exploração. Se declinado, documente limitações.
-3. Análise de riscos técnica profunda (Step 2): se tecnicamente complexo, use `references/tech-planning/risk-analysis.md`
-4. Identifique spikes críticos (Step 3)
+2. Codebase awareness check (Step 1)
+3. Análise de riscos técnica (Step 2)
+4. Identifique spikes (Step 3)
 5. Defina scopes tipados: feature | optimization | spike (Step 4)
 6. Sequencie (riskiest-first ou ui-first) (Step 5)
 7. Detalhe cada escopo com DoD + acceptance criteria (Step 6)
 8. Formate conforme output-format.md (Step 7)
 
-NÃO peça input ao usuário — apenas gere o plano completo.
+Saída: `product-workflow/{YYYY-MM-DD}/{_dir}/plans/spec-tech_{v}.md`
+Entrada: `product-workflow/{YYYY-MM-DD}/{_dir}/plans/spec-product_{v}.md`
 
-Arquivo de entrada: product-workflow/{YYYY-MM-DD}/{slug}/plans/spec-product_{v}.md
-
-⚠️ **Requisito de segurança:** Antes de começar, verifique se o YAML frontmatter
-do `spec-product.md` contém `approved: true`. Se não contiver, NÃO gere o plano —
-retorne um erro informando que o Review Gate não foi executado ainda.`,
-  output: "product-workflow/{YYYY-MM-DD}/{slug}/plans/spec-tech_{v}.md",
-  reads: ["product-workflow/{YYYY-MM-DD}/{slug}/plans/spec-product_{v}.md"],
-  context: "fork"
-})
-```
-
-Após concluir, leia o output e valide.
-
-⚠️ **VERIFICAÇÃO DE SEGURANÇA (mecânica):**
-Antes de prosseguir, verifique se o Review Gate (Fase 4) foi executado
-**lendo o YAML frontmatter do spec-product.md**:
-
+⚠️ **Verificação de segurança:** Leia o YAML frontmatter do spec-product.md:
 ```bash
-head -10 product-workflow/{YYYY-MM-DD}/{slug}/plans/spec-product_{v}.md | grep "approved:"
+head -10 ...spec-product_{v}.md | grep "approved:"
 ```
-
-- ✅ Se `approved: true` estiver presente → gate já foi executado. Prossiga.
-- ❌ Se NÃO houver `approved: true` → **VOLTE para a Fase 4 e execute.**
-  Não prossiga sem o gate.
-
-Esta verificação é **determinística** — não depende de memória do chat.
+- ✅ `approved: true` → prossegue
+- ❌ Sem `approved: true` → **VOLTE para Fase 4. Não prossiga.**
+  Esta verificação é **determinística** — não depende de memória.
 
 ### 5b. Review Gate condicional
 
@@ -839,7 +579,7 @@ Esta verificação é **determinística** — não depende de memória do chat.
 `spec-tech.md`:
 
 ```bash
-plannotator annotate product-workflow/{YYYY-MM-DD}/{slug}/plans/spec-tech_{v}.md --gate
+plannotator annotate product-workflow/{YYYY-MM-DD}/{_dir}/plans/spec-tech_{v}.md --gate
 ```
 
 Após aprovação, carimbe o spec-tech.md (mesmo procedimento da Fase 4):
@@ -849,9 +589,9 @@ Após aprovação, carimbe o spec-tech.md (mesmo procedimento da Fase 4):
    approved_at: "<timestamp>"
    approved_via: plannotator --gate
    ```
-2. Crie receipt em `.plannotator/approvals/{slug}/spec-tech_{v}.approved.md`:
+2. Crie receipt em `.plannotator/approvals/{_dir}/spec-tech_{v}.approved.md`:
    ```bash
-   mkdir -p .plannotator/approvals/{slug} && cat > .plannotator/approvals/{slug}/spec-tech_{v}.approved.md << 'EOF'
+   mkdir -p .plannotator/approvals/{_dir} && cat > .plannotator/approvals/{_dir}/spec-tech_{v}.approved.md << 'EOF'
    # Aprovação: spec-tech_{v}.md
    - Aprovado em: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
    - Hash do spec: `git hash-object docs/.../spec-tech_{v}.md`
@@ -875,131 +615,25 @@ Organize por: scopes, spikes, rollout stages, dependências.
 
 ## Fase 6: Supervisor + Execução
 
-### ⚠️ Supervisor — ativar APENAS na execução
+### ⚠️ Ative o supervisor APENAS na execução
+**Nunca ative durante Fases 1-5.** O supervisor re-submeteria o Plannotator.
 
-**O supervisor NÃO deve ser ativado durante o planejamento (Fases 1-5).**
-Ativá-lo durante o planejamento causa steering messages que re-submetem
-o Plannotator, pois o supervisor é um LLM separado que não entende o workflow
-de produto e não vê arquivos.
+### Scope Executor Routing
 
-**Ative o supervisor SOMENTE após a aprovação final do tech plan**
-(Fase 5c concluída), quando o agente for executar scopes técnicos.
+| Tipo de Scope | Métrica? | Executor |
+|---|---|---|
+| `[TYPE] optimization` | Sim | `/skill:autoresearch-create` |
+| `[EXECUTOR] autoresearch` | Sim | `/skill:autoresearch-create` |
+| Spike com métrica | Sim | `/skill:autoresearch-create` |
+| Feature | Não | `/sisyphus` (ordered steps) |
+| Refatoração sem métrica | Não | `/sisyphus` |
+| Spike investigativo | Não | `/sisyphus` |
+| Interface brainstorming | Não | `/sisyphus` (5 proposals) |
 
----
+**Dicas:** Use `/goal-tweak` para ajustes. Se bloqueado, `pause_goal` com reason.
 
-### Scope Executor Routing — capyup/pi-goal vs Autoresearch
-
-**ANTES de executar qualquer scope, determine o executor correto:**
-
-```
-Scope definido em spec-tech.md
-    │
-    ├─→ [TYPE] optimization?
-    │       └─→ YES → autoresearch (NÃO usar capyup)
-    │           Use: /skill:autoresearch-create
-    │
-    ├─→ [EXECUTOR] autoresearch?
-    │       └─→ YES → autoresearch (NÃO usar capyup)
-    │           Use: /skill:autoresearch-create
-    │
-    ├─→ [TYPE] spike + tem métrica mensurável?
-    │       └─→ YES → autoresearch (NÃO usar capyup)
-    │           Métrica = latency, bundle size, coverage, complexity
-    │
-    └─→ [TYPE] feature | spike investigativo | refatoração
-            └─→ YES → capyup/pi-goal Sisyphus (se agent julgar beneficial)
-                Use: /sisyphus <descrição do scope>
-```
-
-**Quando USAR `/sisyphus` (capyup/pi-goal):**
-
-| Scope | Por quê capyup? |
-|-------|------------------|
-| Feature implementation | Ordered steps + completion audit |
-| Refatoração sem métrica | Ordered verification steps |
-| Interface brainstorming | Todas as 5 proposals com completeness |
-| Spike investigativo | "If blocked/unclear: stop and ask" discipline |
-
-**Quando NÃO USAR capyup (usar autoresearch):**
-
-| Scope | Executor | Por quê |
-|-------|----------|---------|
-| `[TYPE] optimization` | autoresearch | Iteration loop otimizado por métrica |
-| `[EXECUTOR] autoresearch` | autoresearch | Métrica explícita definida |
-| Feature com métrica mensurável | autoresearch | Métrica > ordered steps |
-
-**Como distinguir refatoração:**
-| Scope | Métrica? | Executor |
-|-------|----------|----------|
-| "Refatorar auth para strategy pattern" | ❌ Sem métrica | capyup Sisyphus |
-| "Reduzir complexidade ciclomática para <10" | ✅ Métrica | autoresearch |
-| "Melhorar test coverage para 80%" | ✅ Métrica | autoresearch |
-
----
-
-### Execução de Scope — Pattern por Tipo
-
-#### Scope FEATURE (use capyup/pi-goal):
-```bash
-/sisyphus Implementar [descrição do scope]
-```
-
-Fluxo:
-1. Agent entra em drafting mode → clarification questions se necessário
-2. Propoe draft com ordered steps
-3. User confirma
-4. Executa Sisyphus ordered steps (pause_goal se bloqueado)
-5. update_goal(status=complete) → Auditor independente
-6. Se `<approved/>` → archived. Se `<disapproved/>` → reopen
-
-#### Scope OPTIMIZATION (use autoresearch):
-```bash
-/skill:autoresearch-create
-```
-Fluxo (via cali-product-scope-executor):
-1. subagent(agent: "delegate") → /skill:autoresearch-create
-2. Autoresearch loop com métrica
-3. parallel-review quando done
-
-#### Scope SPIKE investigativo (use capyup/pi-goal):
-```bash
-/sisyphus Investigar viabilidade de [tecnologia/arquitetura]
-```
-
-#### Scope SPIKE com métrica (use autoresearch):
-```bash
-/skill:autoresearch-create
-```
-
----
-
-### /sisyphus — Dicas de Uso
-
-**Para scopes que se beneficiam de ordered execution:**
-- Feature implementation complexa
-- Refatoração com múltiplos passos
-- Investigação estruturada
-- Interface proposals
-
-**Dica:** Use `/goal-tweak` para ajustes finos durante execução sem perder contexto.
-
-**Dica:** Se bloqueado, use `pause_goal` com reason — não invente workarounds.
-
-- **pi.dev:** use `/supervise Executar os scopes do spec-tech.md aprovado:
-  [scope 1], [scope 2], etc. Seguir estritamente o escopo definido,
-  respeitar DoD e acceptance criteria de cada um, sem adicionar features
-  não planejadas.`
-- **Fusion:** use `fn_mission_create` com milestones para cada scope.
-
-> 🎯 **O supervisor durante a execução serve para:** manter foco nos scopes,
-> impedir desvio de escopo, responder perguntas desnecessárias com defaults,
-> e sinalizar "done" quando todos os scopes estiverem completos.
-
-Após o tech planning, execute o roteamento:
-
-- **pi.dev:** `/skill:cali-product-scope-executor`
-- **Fusion:** automático — tasks em `todo` com plano aprovado são
-  executadas pelo executor no próximo heartbeat.
+> `/supervise Executar scopes do spec-tech.md aprovado: [scopes]. Seguir DoD e AC.`
+> Após tech planning, execute `/skill:cali-product-scope-executor`
 
 ---
 

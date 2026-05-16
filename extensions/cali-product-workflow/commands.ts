@@ -1,0 +1,458 @@
+import type { ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
+import { PHASE_NAMES } from "./types";
+import {
+  readTracking, writeTracking, readGlobalTracking, writeGlobalTracking,
+  getActiveWorkflow, renameWorkflow, slugify
+} from "./state";
+import { updateFooter, notifyPhase, showOverlay } from "./ui";
+import cmdStart from "./start";
+
+type CmdCtx = ExtensionCommandContext;
+
+// ── Helper: parse command args ───────────────────────────────────────
+// Pi passes the raw text after the command name as a string.
+// This helper parses key=value pairs (quoted values supported) and also
+// exposes positional tokens via "_" (array).
+function parseArgs(raw: string): Record<string, string> & { _: string[] } {
+  const result: Record<string, string> & { _: string[] } = { _: [] };
+
+  const trimmed = raw?.trim() ?? "";
+  if (!trimmed) return result;
+
+  // tokenize respecting double quotes
+  const tokens: string[] = [];
+  let buf = "";
+  let inQ = false;
+  for (const ch of trimmed) {
+    if (ch === '"') { inQ = !inQ; continue; }
+    if (ch === " " && !inQ) {
+      if (buf) { tokens.push(buf); buf = ""; }
+      continue;
+    }
+    buf += ch;
+  }
+  if (buf) tokens.push(buf);
+
+  for (const tok of tokens) {
+    const eq = tok.indexOf("=");
+    if (eq > 0) {
+      result[tok.slice(0, eq)] = tok.slice(eq + 1);
+    } else {
+      result._.push(tok);
+    }
+  }
+  return result;
+}
+
+// ── Helper: notify + log ────────────────────────────────────────────
+function reply(ctx: CmdCtx, text: string): void {
+  ctx.ui?.notify(text, "info");
+}
+
+function replyWarn(ctx: CmdCtx, text: string): void {
+  ctx.ui?.notify(text, "warning");
+}
+
+function noActive(ctx: CmdCtx): void {
+  replyWarn(ctx, "No active Workflow. Start with /pw:start");
+}
+
+// ── STOP ─────────────────────────────────────────────────────────────
+
+function cmdStop(_pi: ExtensionAPI, _args: string, ctx: CmdCtx) {
+  const wf = getActiveWorkflow(ctx.cwd);
+  if (!wf) { noActive(ctx); return; }
+
+  ctx.ui?.setStatus("workflow", undefined);
+
+  const t = readTracking(ctx.cwd);
+  if (t) {
+    t.workflows = t.workflows.filter(w => w.slug !== wf.slug);
+    writeTracking(ctx.cwd, t);
+  }
+  const gt = readGlobalTracking();
+  if (gt) {
+    gt.workflows = gt.workflows.filter(w => w.slug !== wf.slug);
+    writeGlobalTracking(gt);
+  }
+
+  ctx.ui?.notify(`❌ Workflow '${wf.slug}' stopped.`, "info");
+}
+
+// ── PAUSE / RESUME ───────────────────────────────────────────────────
+
+function cmdPause(_pi: ExtensionAPI, _args: string, ctx: CmdCtx) {
+  const wf = getActiveWorkflow(ctx.cwd);
+  if (!wf) { noActive(ctx); return; }
+
+  const t = readTracking(ctx.cwd);
+  if (t) {
+    const idx = t.workflows.findIndex(w => w.slug === wf.slug);
+    if (idx !== -1) {
+      t.workflows[idx].status = "paused";
+      t.workflows[idx].updated = new Date().toISOString();
+      writeTracking(ctx.cwd, t);
+    }
+  }
+  const gt = readGlobalTracking();
+  if (gt) {
+    const idx = gt.workflows.findIndex(w => w.slug === wf.slug);
+    if (idx !== -1) gt.workflows[idx].status = "paused";
+    writeGlobalTracking(gt);
+  }
+
+  ctx.ui?.setStatus("workflow", ctx.ui?.theme?.fg("warning", `⏸ ${wf.slug}`));
+  reply(ctx, `⏸ Workflow '${wf.slug}' paused.`);
+}
+
+function cmdResume(_pi: ExtensionAPI, args: string, ctx: CmdCtx) {
+  const parsed = parseArgs(args);
+  const name = parsed.name || parsed._[0];
+  const t = readTracking(ctx.cwd);
+  const gt = readGlobalTracking();
+
+  const paused = name
+    ? t?.workflows.find(w => w.slug === name && w.status === "paused")
+    : t?.workflows.find(w => w.status === "paused");
+
+  if (!paused) {
+    replyWarn(ctx, name
+      ? `Paused workflow '${name}' not found. /pw:ls`
+      : "No paused Workflow."
+    );
+    return;
+  }
+
+  if (t) {
+    const idx = t.workflows.findIndex(w => w.slug === paused.slug);
+    if (idx !== -1) t.workflows[idx].status = "in-progress";
+    writeTracking(ctx.cwd, t);
+  }
+  if (gt) {
+    const idx = gt.workflows.findIndex(w => w.slug === paused.slug);
+    if (idx !== -1) gt.workflows[idx].status = "in-progress";
+    writeGlobalTracking(gt);
+  }
+
+  updateFooter(ctx, ctx.cwd);
+  reply(ctx, `▶️ '${paused.slug}' resumed. Stage: ${PHASE_NAMES[paused.currentPhase]}`);
+}
+
+// ── STATUS ───────────────────────────────────────────────────────────
+
+function cmdStatus(_pi: ExtensionAPI, _args: string, ctx: CmdCtx) {
+  const wf = getActiveWorkflow(ctx.cwd);
+  if (!wf) {
+    const g = readGlobalTracking()?.workflows.find(w => w.status === "in-progress");
+    if (g) {
+      reply(ctx, [
+        `▶️ ${g.slug}`,
+        `   ${PHASE_NAMES[g.currentPhase]}`,
+        `   Project: ${g.cwd}`,
+        `   cd ${g.cwd}`
+      ].join("\n"));
+      return;
+    }
+    replyWarn(ctx, "No active Workflow.\n\n/pw:start\n/pw:start @brief.md\n/pw:start \"desc\"");
+    return;
+  }
+
+  reply(ctx, [
+    `◆ Workflow: ${wf.slug}`,
+    `Stage: ${wf.currentPhase + 1}/${PHASE_NAMES.length} — ${PHASE_NAMES[wf.currentPhase]}`,
+    wf.draftContent
+      ? `\n📝 ${wf.draftContent.slice(0, 300)}${wf.draftContent.length > 300 ? "..." : ""}`
+      : "",
+    "",
+    "Stages:",
+    ...wf.phases.map((p, i) => {
+      const icon = p.status === "completed" ? "✓" :
+        p.status === "in-progress" ? "◆" : "○";
+      return `${i === wf.currentPhase ? "→ " : "  "}${icon} ${i + 1}. ${p.name}`;
+    }),
+    "",
+    "/pw:next  /pw:stop  /pw:menu"
+  ].join("\n"));
+}
+
+// ── LIST ─────────────────────────────────────────────────────────────
+
+function cmdList(_pi: ExtensionAPI, _args: string, ctx: CmdCtx) {
+  const lines: string[] = [];
+  const t = readTracking(ctx.cwd);
+
+  if (t && t.workflows.length > 0) {
+    lines.push("📁 Current Project:");
+    for (const w of t.workflows) {
+      const icon = w.status === "in-progress" ? "◆" :
+        w.status === "paused" ? "⏸" :
+        w.status === "completed" ? "✓" : "○";
+      lines.push(`  ${icon} ${w.slug} — ${PHASE_NAMES[w.currentPhase]} (${w.status})`);
+    }
+    lines.push("");
+  }
+
+  const gt = readGlobalTracking();
+  if (gt) {
+    const other = gt.workflows.filter(gw => !t?.workflows.some(tw => tw.slug === gw.slug));
+    if (other.length > 0) {
+      lines.push("🌐 Other Projects:");
+      for (const w of other) {
+        const icon = w.status === "in-progress" ? "◆" :
+          w.status === "paused" ? "⏸" :
+          w.status === "completed" ? "✓" : "○";
+        lines.push(`  ${icon} ${w.slug} — ${PHASE_NAMES[w.currentPhase]} (${w.status})`);
+        lines.push(`     ${w.cwd}`);
+      }
+    }
+  }
+
+  if (lines.length === 0) {
+    replyWarn(ctx, "No Workflows found. /pw:start");
+  } else {
+    reply(ctx, lines.join("\n"));
+  }
+}
+
+// ── SETPHASE ─────────────────────────────────────────────────────────
+
+function cmdSetPhase(_pi: ExtensionAPI, args: string, ctx: CmdCtx) {
+  const parsed = parseArgs(args);
+  const raw = parsed.phase;
+  const name = parsed.phasename;
+
+  let phase: number | null = null;
+  if (raw !== undefined) phase = parseInt(String(raw), 10);
+  else if (name) phase = PHASE_NAMES.findIndex(p => p.toLowerCase() === String(name).toLowerCase());
+
+  if (phase === null || isNaN(phase) || phase < 0 || phase >= PHASE_NAMES.length) {
+    replyWarn(ctx, [
+      "Usage: /pw:setphase phase=N",
+      "   or: /pw:setphase phasename=Name",
+      "",
+      ...PHASE_NAMES.map((n, i) => `  ${i}: ${n}`),
+    ].join("\n"));
+    return;
+  }
+
+  const wf = getActiveWorkflow(ctx.cwd);
+  if (!wf) { noActive(ctx); return; }
+  const oldPhase = wf.currentPhase;
+
+  const t = readTracking(ctx.cwd);
+  if (t) {
+    const idx = t.workflows.findIndex(w => w.slug === wf.slug);
+    if (idx !== -1) {
+      t.workflows[idx].currentPhase = phase;
+      t.workflows[idx].phases.forEach((p, i) => {
+        p.status = i < phase ? "completed" : i === phase ? "in-progress" : "pending";
+      });
+      t.workflows[idx].updated = new Date().toISOString();
+      writeTracking(ctx.cwd, t);
+    }
+  }
+  const gt = readGlobalTracking();
+  if (gt) {
+    const idx = gt.workflows.findIndex(w => w.slug === wf.slug);
+    if (idx !== -1) gt.workflows[idx].currentPhase = phase;
+    writeGlobalTracking(gt);
+  }
+
+  updateFooter(ctx, ctx.cwd);
+  if (oldPhase !== phase) notifyPhase(ctx, wf, oldPhase);
+  reply(ctx, `▶️ Phase: ${PHASE_NAMES[phase]} (${phase + 1}/${PHASE_NAMES.length})`);
+}
+
+// ── NEXT ─────────────────────────────────────────────────────────────
+
+function cmdNext(_pi: ExtensionAPI, _args: string, ctx: CmdCtx) {
+  const wf = getActiveWorkflow(ctx.cwd);
+  if (!wf) { noActive(ctx); return; }
+
+  const next = wf.currentPhase + 1;
+  if (next >= PHASE_NAMES.length) {
+    reply(ctx, "All phases complete. /pw:complete");
+    return;
+  }
+
+  const oldPhase = wf.currentPhase;
+  const t = readTracking(ctx.cwd);
+  if (t) {
+    const idx = t.workflows.findIndex(w => w.slug === wf.slug);
+    if (idx !== -1) {
+      t.workflows[idx].currentPhase = next;
+      t.workflows[idx].phases.forEach((p, i) => {
+        p.status = i < next ? "completed" : i === next ? "in-progress" : "pending";
+      });
+      t.workflows[idx].updated = new Date().toISOString();
+      writeTracking(ctx.cwd, t);
+    }
+  }
+  const gt = readGlobalTracking();
+  if (gt) {
+    const idx = gt.workflows.findIndex(w => w.slug === wf.slug);
+    if (idx !== -1) gt.workflows[idx].currentPhase = next;
+    writeGlobalTracking(gt);
+  }
+
+  updateFooter(ctx, ctx.cwd);
+  notifyPhase(ctx, wf, oldPhase);
+  reply(ctx, `✅ ${PHASE_NAMES[next]} (${next + 1}/${PHASE_NAMES.length})`);
+}
+
+// ── COMPLETE ─────────────────────────────────────────────────────────
+
+function cmdComplete(_pi: ExtensionAPI, _args: string, ctx: CmdCtx) {
+  const wf = getActiveWorkflow(ctx.cwd);
+  if (!wf) { replyWarn(ctx, "No active workflow."); return; }
+
+  ctx.ui?.setStatus("workflow", undefined);
+
+  const t = readTracking(ctx.cwd);
+  if (t) {
+    const idx = t.workflows.findIndex(w => w.slug === wf.slug);
+    if (idx !== -1) {
+      t.workflows[idx].status = "completed";
+      t.workflows[idx].updated = new Date().toISOString();
+      writeTracking(ctx.cwd, t);
+    }
+  }
+  const gt = readGlobalTracking();
+  if (gt) {
+    const idx = gt.workflows.findIndex(w => w.slug === wf.slug);
+    if (idx !== -1) gt.workflows[idx].status = "completed";
+    writeGlobalTracking(gt);
+  }
+
+  ctx.ui?.notify(`🎉 ${wf.slug} completed!`, "success");
+}
+
+// ── GOTO ─────────────────────────────────────────────────────────────
+
+function cmdGoto(_pi: ExtensionAPI, args: string, _ctx: CmdCtx) {
+  const parsed = parseArgs(args);
+  const name = parsed.name || parsed._[0];
+  const gt = readGlobalTracking();
+  if (!gt) { replyWarn(_ctx, "No global workflows."); return; }
+
+  const wf = name
+    ? gt.workflows.find(w => w.slug === name)
+    : gt.workflows.find(w => w.status === "in-progress");
+
+  if (!wf) {
+    replyWarn(_ctx, `'${name || "active"}' not found. /pw:ls`);
+    return;
+  }
+
+  reply(_ctx, [
+    `📍 ${wf.slug}`,
+    `Project: ${wf.cwd}`,
+    `Stage: ${PHASE_NAMES[wf.currentPhase]}`,
+    `\ncd ${wf.cwd}\n/pw:resume name=${wf.slug}`
+  ].join("\n"));
+}
+
+// ── RENAME ───────────────────────────────────────────────────────────
+
+function cmdRename(_pi: ExtensionAPI, args: string, ctx: CmdCtx) {
+  const parsed = parseArgs(args);
+  // Join all positional tokens (like cmdStart) — renameWorkflow slugifies internally
+  const newName = parsed.name || (parsed._.length > 0 ? parsed._.join(" ") : undefined);
+  if (!newName || newName.trim().length < 2) {
+    replyWarn(ctx, "Usage: /pw:rename novo-nome");
+    return;
+  }
+
+  const wf = getActiveWorkflow(ctx.cwd);
+  if (!wf) { noActive(ctx); return; }
+
+  const result = renameWorkflow(ctx.cwd, wf.slug, newName);
+  if (!result.ok) { replyWarn(ctx, `❌ ${result.error}`); return; }
+
+  updateFooter(ctx, ctx.cwd);
+  ctx.ui?.notify(`✨ Renamed to "${slugify(newName)}"`, "success");
+}
+
+// ── MENU ─────────────────────────────────────────────────────────────
+
+function cmdMenu(_pi: ExtensionAPI, _args: string, ctx: CmdCtx) {
+  showOverlay(ctx, ctx.cwd);
+  // Overlay is interactive; no notify needed — user sees TUI.
+}
+
+// ── CLEAN ────────────────────────────────────────────────────────────
+
+function cmdClean(_pi: ExtensionAPI, args: string, ctx: CmdCtx) {
+  const parsed = parseArgs(args);
+  const hours = parseInt(parsed.hours || "4", 10);
+  const cutoff = Date.now() - hours * 60 * 60 * 1000;
+
+  const t = readTracking(ctx.cwd);
+  if (!t) { replyWarn(ctx, "No tracking data."); return; }
+
+  const orphans = t.workflows.filter(w => {
+    if (w.status === "completed" || w.status === "in-progress") return false;
+    return new Date(w.updated).getTime() < cutoff;
+  });
+
+  if (orphans.length === 0) {
+    reply(ctx, `✅ No orphans (>${hours}h stale).`);
+    return;
+  }
+
+  for (const o of orphans) {
+    const idx = t.workflows.findIndex(w => w.slug === o.slug);
+    if (idx !== -1) t.workflows[idx].status = "archived";
+  }
+  writeTracking(ctx.cwd, t);
+
+  const gt = readGlobalTracking();
+  if (gt) {
+    for (const o of orphans) {
+      const idx = gt.workflows.findIndex(w => w.slug === o.slug);
+      if (idx !== -1) gt.workflows[idx].status = "archived";
+    }
+    writeGlobalTracking(gt);
+  }
+
+  reply(ctx, [
+    `🧹 Archived ${orphans.length} orphan(s) (>${hours}h):`,
+    ...orphans.map(o => `  ○ ${o.slug} — ${PHASE_NAMES[o.currentPhase]}`),
+    "",
+    "/pw:start"
+  ].join("\n"));
+}
+
+// =============================================================================
+// REGISTRATION
+// =============================================================================
+
+// Pi passes the raw text after the command name as the first argument (a string).
+interface CmdHandler {
+  (pi: ExtensionAPI, args: string, ctx: CmdCtx): void | Promise<void>;
+}
+
+// Canonical + alias map: handler → list of command names
+const CMD_MAP: [CmdHandler, string, string][] = [
+  [cmdStart,   "product-workflow-start", "pw:start"],
+  [cmdStop,    "product-workflow-stop",  "pw:stop"],
+  [cmdPause,   "product-workflow-pause", "pw:pause"],
+  [cmdResume,  "product-workflow-resume","pw:resume"],
+  [cmdStatus,  "product-workflow-status","pw:status"],
+  [cmdList,    "product-workflow-list",  "pw:ls"],
+  [cmdSetPhase,"product-workflow-setphase","pw:setphase"],
+  [cmdNext,    "product-workflow-next",  "pw:next"],
+  [cmdComplete,"product-workflow-complete","pw:complete"],
+  [cmdGoto,    "product-workflow-goto",  "pw:goto"],
+  [cmdRename,  "product-workflow-rename","pw:rename"],
+  [cmdMenu,    "product-workflow-menu",  "pw:menu"],
+  [cmdClean,   "product-workflow-clean", "pw:clean"],
+];
+
+export function registerCommands(pi: ExtensionAPI): void {
+  for (const [handler, canonical, alias] of CMD_MAP) {
+    const wrapper = async (args: string, ctx: any) => handler(pi, args ?? "", ctx as CmdCtx);
+    pi.registerCommand(canonical, { description: "", handler: wrapper });
+    pi.registerCommand(alias, { description: `Alias for /${canonical}`, handler: wrapper });
+  }
+}
