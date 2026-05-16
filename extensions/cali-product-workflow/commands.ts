@@ -4,7 +4,8 @@ import { Container, Text, Spacer, SelectList } from "@earendil-works/pi-tui";
 import { PHASE_NAMES } from "./types";
 import {
   readTracking, writeTracking, readGlobalTracking, writeGlobalTracking,
-  getActiveWorkflow, renameWorkflow, slugify, reconcileTracking, scanWorkflowDirs
+  getActiveWorkflow, renameWorkflow, slugify, reconcileTracking, scanWorkflowDirs,
+  archiveWorkflowOnDisk
 } from "./state";
 import { updateFooter, notifyPhase, showOverlay } from "./ui";
 import cmdStart from "./start";
@@ -61,6 +62,9 @@ function noActive(ctx: CmdCtx): void {
 
 // ── Helper: remove workflow from both local and global tracking ─────
 function removeWorkflowFromTracking(cwd: string, slug: string): void {
+  // Mark archived on disk so reconcileTracking doesn't re-import it
+  archiveWorkflowOnDisk(cwd, slug);
+
   const t = readTracking(cwd);
   if (t) {
     t.workflows = t.workflows.filter(w => w.slug !== slug);

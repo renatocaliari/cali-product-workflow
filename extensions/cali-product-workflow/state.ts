@@ -262,6 +262,8 @@ export function reconcileTracking(cwd: string): Workflow[] {
 
   let changed = false;
   for (const dw of diskWfs) {
+    // Only auto-import active workflows (stopped/archived on disk stay out)
+    if (dw.status !== "in-progress" && dw.status !== "paused") continue;
     const exists = known.some(w => w.slug === dw.slug);
     if (!exists) {
       // Convert DiskWorkflow → Workflow and add to tracking
@@ -299,6 +301,38 @@ export function reconcileTracking(cwd: string): Workflow[] {
   }
 
   return known;
+}
+
+/**
+ * Mark a workflow as archived in its index.json on disk.
+ * Returns true if found and updated, false if not found.
+ */
+export function archiveWorkflowOnDisk(cwd: string, slug: string): boolean {
+  const base = join(cwd, WORKFLOW_DIR);
+  if (!existsSync(base)) return false;
+
+  try {
+    const dateDirs = readdirSafe(base);
+    for (const dateDir of dateDirs) {
+      if (!dateDir.match(/^\d{4}-\d{2}-\d{2}$/)) continue;
+      const datePath = join(base, dateDir);
+      const wfDirs = readdirSafe(datePath);
+      for (const wfDir of wfDirs) {
+        const indexPath = join(datePath, wfDir, "index.json");
+        if (!existsSync(indexPath)) continue;
+        try {
+          const raw = JSON.parse(readFileSync(indexPath, "utf-8"));
+          if (raw.slug === slug) {
+            raw.workflow_status = "archived";
+            raw.updated_at = new Date().toISOString();
+            writeFileSync(indexPath, JSON.stringify(raw, null, 2));
+            return true;
+          }
+        } catch { /* skip */ }
+      }
+    }
+  } catch { /* skip */ }
+  return false;
 }
 
 /** Safe directory listing that returns [] on error. */
