@@ -315,18 +315,57 @@ Rode \`safe-change\` do **pi-agent-codebase-workflows** (PriNova) ANTES de pross
 **Se usuário não selecionar nenhuma opção de workflow:** implementação segue direto,
 mas safe-change ainda é oferecido.
 
-### 0b. Exploração Estratégica (opcional)
+### 0b. Exploração Estratégica (sempre perguntar)
 
-**Detecte sinais** de que o usuário quer explorar direções estratégicas:
-- "como evoluir", "novas features", "oportunidades", "estratégia"
-- JTBD, jobs-to-be-done, evolutionary, opportunity mapping, short-cycle, market analysis
+**SEMPRE pergunte** antes de iniciar o planejamento — o usuário pode querer
+contexto estratégico mesmo em pedidos táticos. Leia `references/strategic-exploration.md`
+para detalhes de cada abordagem.
 
-**Se detectado:** leia `references/strategic-exploration.md` e siga as instruções.
+```typescript
+ask_user_question({
+  questions: [{
+    question: `Antes de planejar, quer explorar direções estratégicas?
 
-**Se não detectado ou usuário recusar:** prossiga direto para Fase 1.
+Cada abordagem abaixo gera insumos que alimentam o Shape Up.
+Recomendo: [justificativa com base no contexto do projeto].`,
+    header: "Estratégia",
+    multiSelect: true,
+    options: [
+      {
+        label: "Jobs To Be Done (JTBD)",
+        description: "Mapear jobs funcionais, emocionais e sociais que o usuário contrata. Gera segmentação contextual e desired outcomes."
+      },
+      {
+        label: "Evolutionary Principles",
+        description: "Explorar inovação por stepping-stones, novelty search e optionality. Útil quando o caminho não é óbvio."
+      },
+      {
+        label: "Opportunity Mapping",
+        description: "Mapear oportunidades do problema com soluções rankeadas. Gera mapa de oportunidades priorizado."
+      },
+      {
+        label: "Market Analysis",
+        description: "PESTLE, Foresight, Wardley Maps. Útil para entender concorrência, tendências e posicionamento."
+      },
+      {
+        label: "Short-Cycle Product",
+        description: "Validação rápida de ideias com ciclos curtos de aprendizado. Ideal para hypotheses não validadas."
+      },
+      {
+        label: "Nenhuma — seguir direto",
+        description: "Pular exploração estratégica e ir para Shape Up."
+      }
+    ]
+  }]
+})
+```
 
-> O conteúdo completo foi extraído para `references/strategic-exploration.md`
-> para reduzir o tamanho deste arquivo. Leia-o APENAS se necessário.
+**Se usuário selecionar uma ou mais abordagens:**
+1. Leia `references/strategic-exploration.md` para roteiro de cada uma
+2. Execute as selecionadas (podem rodar em paralelo via subagent)
+3. Incorpore os outputs como insumo do Shape Up
+
+**Se selecionar "Nenhuma" (ou não selecionar nada):** prossiga direto para Fase 1.
 
 ### Regras de encadeamento automático
 
@@ -442,8 +481,57 @@ subagent({
 - Saída combinada: \`product-workflow/{YYYY-MM-DD}/{_dir}/interfaces/interfaces_{v}.md\`
 - **Não peça input** — gere tudo de uma vez
 
-Após concluir, crie \`spec-product_{v+1}.md\` incorporando a interface escolhida
-(ASCII sketches). Use \`ask_user_question\` para seleção final (H, A, B, C, D, E).
+**Após gerar as 5 propostas, submeta ao Plannotator para visualização:**
+
+> O Plannotator renderiza o markdown no navegador com wireframes ASCII,
+> breadboarding e trade-offs lado a lado, facilitando a comparação visual.
+
+```bash
+plannotator annotate product-workflow/{YYYY-MM-DD}/{_dir}/interfaces/interfaces_{v}.md
+```
+
+Após revisão visual, pergunte ao usuário qual proposta seguir:
+
+```typescript
+ask_user_question({
+  questions: [{
+    question: `Qual direção de interface seguir?
+
+Recomendo: Híbrida (combinação dos pontos fortes de cada proposta).
+Justificativa: [1-2 frases].`,
+    header: "Interface",
+    options: [
+      {
+        label: "H — Híbrida (Recomendado)",
+        description: "Combinação dos melhores elementos de múltiplas propostas."
+      },
+      {
+        label: "A — Proposta A",
+        description: "[descrição resumida do arquétipo A]"
+      },
+      {
+        label: "B — Proposta B",
+        description: "[descrição resumida do arquétipo B]"
+      },
+      {
+        label: "C — Proposta C",
+        description: "[descrição resumida do arquétipo C]"
+      },
+      {
+        label: "D — Proposta D",
+        description: "[descrição resumida do arquétipo D]"
+      },
+      {
+        label: "E — Proposta E",
+        description: "[descrição resumida do arquétipo E]"
+      }
+    ]
+  }]
+})
+```
+
+Após seleção, crie \`spec-product_{v+1}.md\` incorporando a interface escolhida
+(ASCII sketches).
 
 ---
 
