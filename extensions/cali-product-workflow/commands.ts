@@ -1,5 +1,6 @@
 import { homedir } from "node:os";
 import type { ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
+import { Container, Text, Spacer, SelectList } from "@earendil-works/pi-tui";
 import { PHASE_NAMES } from "./types";
 import {
   readTracking, writeTracking, readGlobalTracking, writeGlobalTracking,
@@ -58,26 +59,159 @@ function noActive(ctx: CmdCtx): void {
   replyWarn(ctx, "No active Workflow. Start with /pw:start");
 }
 
-// ── STOP ─────────────────────────────────────────────────────────────
-
-function cmdStop(_pi: ExtensionAPI, _args: string, ctx: CmdCtx) {
-  const wf = getActiveWorkflow(ctx.cwd);
-  if (!wf) { noActive(ctx); return; }
-
-  ctx.ui?.setStatus("workflow", undefined);
-
-  const t = readTracking(ctx.cwd);
+// ── Helper: remove workflow from both local and global tracking ─────
+function removeWorkflowFromTracking(cwd: string, slug: string): void {
+  const t = readTracking(cwd);
   if (t) {
-    t.workflows = t.workflows.filter(w => w.slug !== wf.slug);
-    writeTracking(ctx.cwd, t);
+    t.workflows = t.workflows.filter(w => w.slug !== slug);
+    t.updated = new Date().toISOString();
+    writeTracking(cwd, t);
   }
   const gt = readGlobalTracking();
   if (gt) {
-    gt.workflows = gt.workflows.filter(w => w.slug !== wf.slug);
+    gt.workflows = gt.workflows.filter(w => w.slug !== slug);
+    gt.updated = new Date().toISOString();
     writeGlobalTracking(gt);
   }
+}
 
-  ctx.ui?.notify(`❌ Workflow '${wf.slug}' stopped.`, "info");
+// ── STOP ─────────────────────────────────────────────────────────────
+
+function cmdStop(_pi: ExtensionAPI, args: string, ctx: CmdCtx) {
+  const parsed = parseArgs(args);
+
+  // Gather all workflows from: current dir reconcile + global tracking (same cwd)
+  const fromDisk = reconcileTracking(ctx.cwd);
+  const fromGlobal = readGlobalTracking()?.workflows
+    .filter(w => !fromDisk.some(dw => dw.slug === w.slug)) ?? [];
+  const allWfs = [...fromDisk, ...fromGlobal];
+  const stoppable = allWfs.filter(w =>
+    w.status === "in-progress" || w.status === "paused"
+  );
+
+  if (stoppable.length === 0) {
+    replyWarn(ctx, "No active or paused workflows to stop.");
+    return;
+  }
+
+  // ── /pw:stop all ───────────────────────────────────────────────
+  if (parsed._.includes("all") || parsed.all !== undefined) {
+    for (const w of stoppable) {
+      removeWorkflowFromTracking(ctx.cwd, w.slug);
+    }
+    ctx.ui?.notify(`❌ Stopped ${stoppable.length} workflow(s).`, "info");
+    ctx.ui?.setStatus("workflow", undefined);
+    return;
+  }
+
+  // ── /pw:stop <slug1> <slug2> ───────────────────────────────────
+  if (parsed._.length > 0) {
+    let count = 0;
+    for (const slug of parsed._) {
+      const found = stoppable.find(w => w.slug === slug);
+      if (found) {
+        removeWorkflowFromTracking(ctx.cwd, slug);
+        count++;
+      }
+    }
+    if (count === 0) {
+      replyWarn(ctx, `No workflow found matching: ${parsed._.join(", ")}`);
+    } else {
+      ctx.ui?.notify(`❌ Stopped ${count} workflow(s).`, "info");
+      if (stoppable.some(w => w.slug === getActiveWorkflow(ctx.cwd)?.slug)) {
+        ctx.ui?.setStatus("workflow", undefined);
+      }
+    }
+    return;
+  }
+
+  // ── /pw:stop (no args) — picker se >1, direto se for 1 ──────
+  if (stoppable.length === 1) {
+    const slug = stoppable[0].slug;
+    removeWorkflowFromTracking(ctx.cwd, slug);
+    ctx.ui?.notify(`❌ Workflow '${slug}' stopped.`, "info");
+    ctx.ui?.setStatus("workflow", undefined);
+    return;
+  }
+
+  // Multiple workflows: show interactive picker
+  showStopPicker(ctx, ctx.cwd, stoppable);
+}
+
+function showStopPicker(
+  ctx: CmdCtx, cwd: string, workflows: { slug: string; currentPhase: number }[]
+): void {
+  if (!ctx.ui) return;
+  ctx.ui.custom<string | null>(
+    (_tui, theme, _kb, done) => {
+      const items = [
+        {
+          value: "__all__",
+          label: theme.fg("warning", "🛑 Stop All"),
+          description: `Stop all ${workflows.length} workflow(s)`
+        },
+        ...workflows.map(w => ({
+          value: w.slug,
+          label: `☐ ${w.slug}`,
+          description: `${PHASE_NAMES[w.currentPhase]} — /pw:stop ${w.slug}`
+        })),
+        {
+          value: "__cancel__",
+          label: theme.fg("dim", "Cancel"),
+          description: ""
+        }
+      ];
+
+      const c = new Container();
+      c.addChild(new Text(theme.fg("accent", theme.bold("Select workflow to stop:")), 1, 0));
+      c.addChild(new Spacer(1));
+
+      const sl = new SelectList(items, Math.min(items.length + 2, 14), {
+        selectedPrefix: (t: string) => theme.fg("accent", t),
+        selectedText: (t: string) => theme.fg("accent", t),
+        description: (t: string) => theme.fg("muted", t),
+        scrollInfo: (t: string) => theme.fg("dim", t),
+        noMatch: (t: string) => theme.fg("warning", t),
+      });
+      sl.onSelect = (v: string) => done(v);
+      sl.onCancel = () => done(null);
+      c.addChild(sl);
+      c.addChild(new Spacer(1));
+      c.addChild(new Text(
+        theme.fg("dim", "↑↓ navigate  enter:stop  esc:cancel"), 1, 0
+      ));
+
+      return {
+        render: (w: number) => c.render(w),
+        invalidate: () => c.invalidate(),
+        handleInput: (data: string) => { sl.handleInput(data); },
+      };
+    },
+    {
+      overlay: true,
+      overlayOptions: { width: "50%", minWidth: 46, maxHeight: "70%", anchor: "center" },
+    }
+  ).then(selection => {
+    if (selection === "__all__") {
+      const diskWfs = reconcileTracking(cwd);
+      const globalWfs = (readGlobalTracking()?.workflows ?? [])
+        .filter(w => !diskWfs.some(dw => dw.slug === w.slug));
+      const allWfs = [...diskWfs, ...globalWfs].filter(w =>
+        w.status === "in-progress" || w.status === "paused"
+      );
+      for (const w of allWfs) {
+        removeWorkflowFromTracking(cwd, w.slug);
+      }
+      ctx.ui?.notify(`❌ Stopped ${allWfs.length} workflow(s).`, "info");
+      ctx.ui?.setStatus("workflow", undefined);
+    } else if (selection && selection !== "__cancel__") {
+      removeWorkflowFromTracking(cwd, selection);
+      ctx.ui?.notify(`❌ Workflow '${selection}' stopped.`, "info");
+      if (!getActiveWorkflow(cwd)) {
+        ctx.ui?.setStatus("workflow", undefined);
+      }
+    }
+  });
 }
 
 // ── PAUSE / RESUME ───────────────────────────────────────────────────
@@ -521,10 +655,27 @@ const CMD_MAP: [CmdHandler, string, string][] = [
   [cmdClean,   "product-workflow-clean", "pw:clean"],
 ];
 
+const COMMAND_DESCRIPTIONS: Record<string, string> = {
+  "product-workflow-start": "Start a new workflow. Usage: /pw:start [name=...] [description=...] [@file]",
+  "product-workflow-stop":  "Stop workflow(s): /pw:stop | all | slug1 slug2",
+  "product-workflow-pause": "Pause active workflow: /pw:pause",
+  "product-workflow-resume":"Resume paused workflow: /pw:resume [name=slug]",
+  "product-workflow-status":"Show active workflow status: /pw:status",
+  "product-workflow-list":  "List workflows: /pw:ls | all | path=DIR",
+  "product-workflow-setphase":"Jump to phase: /pw:setphase phase=N | phasename=Name",
+  "product-workflow-next":  "Advance to next phase: /pw:next",
+  "product-workflow-complete":"Mark active workflow complete: /pw:complete",
+  "product-workflow-goto":  "Go to a workflow: /pw:goto [name=slug]",
+  "product-workflow-rename":"Rename active workflow: /pw:rename novo-nome | name=novo-nome",
+  "product-workflow-menu":  "Open workflow overview overlay: /pw:menu",
+  "product-workflow-clean": "Archive stale workflows: /pw:clean [hours=4]",
+};
+
 export function registerCommands(pi: ExtensionAPI): void {
   for (const [handler, canonical, alias] of CMD_MAP) {
     const wrapper = async (args: string, ctx: any) => handler(pi, args ?? "", ctx as CmdCtx);
-    pi.registerCommand(canonical, { description: "", handler: wrapper });
-    pi.registerCommand(alias, { description: `Alias for /${canonical}`, handler: wrapper });
+    const desc = COMMAND_DESCRIPTIONS[canonical] || "";
+    pi.registerCommand(canonical, { description: desc, handler: wrapper });
+    pi.registerCommand(alias, { description: `Alias: ${desc}`, handler: wrapper });
   }
 }

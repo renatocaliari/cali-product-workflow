@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, writeFileSync, statSync, readdirSync } from "node:fs";
 import { join, basename, dirname, extname } from "node:path";
 import type { Workflow, TrackingData, ParsedInput } from "./types";
-import { TRACKING_FILE, GLOBAL_TRACKING_FILE, SCHEMA_URL, PHASE_NAMES } from "./types";
+import { WORKFLOW_DIR, TRACKING_FILE, GLOBAL_TRACKING_FILE, SCHEMA_URL, PHASE_NAMES } from "./types";
 
 // ── Shared State ─────────────────────────────────────────────────────
 
