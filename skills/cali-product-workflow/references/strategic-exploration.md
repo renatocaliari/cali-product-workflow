@@ -1,45 +1,45 @@
-# Strategic Exploration (Fase 0b)
+# Strategic Exploration (Phase 0b)
 
 ⚠️ **Read this file only when the user shows interest in strategic exploration.**
-Otherwise, skip straight to Fase 1.
+Otherwise, skip straight to Phase 1.
 
 ---
 
 ## Detect Signals
 
 Look for user mentions of:
-- Strategic direction: "como evoluir", "novas features", "oportunidades", "estratégia"
+- Strategic direction: "how to evolve", "new features", "opportunities", "strategy"
 - Methods: JTBD, jobs-to-be-done, evolutionary, opportunity mapping, short-cycle
-- Exploration: "o que construir", "ideias para o produto"
+- Exploration: "what to build", "ideas for the product"
 
 ## Ask
 
 ```typescript
 ask_user_question({
   questions: [{
-    question: `Selecione abordagens estratégicas extras antes do Shape Up.`,
-    header: "Abordagens",
+    question: `Select extra strategic approaches before Shape Up.`,
+    header: "Approaches",
     multiSelect: true,
     options: [
       {
         label: "Job-to-Be-Done Framework",
-        description: "Análise de jobs funcionais, emocionais e sociais. Necessidades não declaradas."
+        description: "Analysis of functional, emotional and social jobs. Undeclared needs."
       },
       {
         label: "Evolutionary Product Thinking",
-        description: "Stepping-stones, evolutionary forces, optionality, evitação de convergência prematura."
+        description: "Stepping-stones, evolutionary forces, optionality, avoiding premature convergence."
       },
       {
         label: "Opportunity Mapping",
-        description: "Oportunidades ranked por impacto e esforço. Quick wins + strategic bets."
+        description: "Opportunities ranked by impact and effort. Quick wins + strategic bets."
       },
       {
         label: "Short-Cycle Product Method",
-        description: "Validação com experimentos rápidos. Métricas, canais, pricing, modelo de negócio."
+        description: "Validation with quick experiments. Metrics, channels, pricing, business model."
       },
       {
         label: "Multi-Method Market Analysis",
-        description: "PESTLE, Wardley Maps, Delphi, Foresight — análise profunda de mercado."
+        description: "PESTLE, Wardley Maps, Delphi, Foresight — deep market analysis."
       }
     ]
   }]
@@ -50,14 +50,21 @@ ask_user_question({
 
 If user selects one or more:
 
-1. Run each selected skill via parallel subagent (fresh context)
-   - `cali-job-to-be-done-framework`
-   - `cali-evolutionary-principles`
-   - `cali-opportunity-mapping`
-   - `cali-short-cycle-product`
-   - `cali-multi-method-market-analysis`
+1. Run each selected skill via parallel subagent (fresh context, ALL concurrently):
+```typescript
+subagent({
+  tasks: selectedApproaches.map(approach => ({
+    agent: "delegate",
+    task: `Execute the analysis using the skill: ${approach.skill}
+for the context: [project context]. Return markdown with complete analysis.`,
+    output: `.cali-product-workflow/{YYYY-MM-DD}/{_dir}/strategic/${approach.name}.md`,
+    context: "fork"
+  })),
+  concurrency: selectedApproaches.length
+})
+```
 
-2. Save individual files to `product-workflow/{YYYY-MM-DD}/{_dir}/`
+2. Save individual files to `.cali-product-workflow/{YYYY-MM-DD}/{_dir}/strategic/`
    - `<skill>-analysis.md`
 
 3. Consolidate into `strategic-insights.md` via subagent with:
@@ -72,20 +79,19 @@ If user selects one or more:
 ```typescript
 ask_user_question({
   questions: [{
-    question: `{Skill} — Selecione insights para incorporar ao Shape Up:`,
+    question: `{Skill} — Select insights to incorporate into Shape Up:`,
     header: "Insights",
     multiSelect: true,
     options: [
       // Generated dynamically based on actual analysis output
     ]
-  }]
-})
+  }])
 ```
    - If no insights selected from a skill → skip that skill
    - Proceed to next or Shape Up
 
 6. Integrate selected insights into Shape Up:
    - Inject as context
-   - Add sections to spec-product.md (e.g. `## Jobs Considerados`)
+   - Add sections to spec-product.md (e.g. `## Considered Jobs`)
 
-If user selects nothing → skip to Fase 1.
+If user selects nothing → skip to Phase 1.

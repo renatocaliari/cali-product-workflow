@@ -30,79 +30,8 @@ All commands use the `/product-workflow-` prefix. Short `/pw:` aliases also work
 | `/product-workflow-start` | Start workflow. Parses `@filename` and text as draft. | `/pw:start` |
 | `/product-workflow-stop` | **Stop** and clear UI immediately. | `/pw:stop` |
 | `/product-workflow-pause` | Pause (keeps state). | `/pw:pause` |
-| `/product-workflow-resume` | Resume paused. Optional: `slug=myname` | `/pw:resume` |
-| `/product-workflow-status` | Show current status. | `/pw:status` |
-| `/product-workflow-list` | List all workflows (project + global). | `/pw:ls` |
-| `/product-workflow-setphase phase=N` | Set phase (0-6). | `/pw:setphase` |
-| `/product-workflow-next` | Advance to next phase. | `/pw:next` |
-| `/product-workflow-complete` | Mark as completed. | `/pw:complete` |
-| `/product-workflow-goto` | Navigate to workflow in another project. | `/pw:goto` |
-| `/product-workflow-rename name=X` | Rename workflow slug. | `/pw:rename` |
-| `/product-workflow-menu` | Open interactive overlay (phase list + actions). | `/pw:menu` |
-| `/product-workflow-clean` | Archive orphaned/stalled workflows. | `/pw:clean` |
+| `/product-workflow-start` | Start workflow. Parses `@filename` and text as draft. | `/pw:start` |
 
-### Input Parsing Examples
-
-```
-/product-workflow-start                       → Placeholder slug "untitled-1"
-/product-workflow-start @brief.md             → Slug from filename
-/product-workflow-start Login flow            → Slug from text
-/product-workflow-start @spec.md "OAuth"       → Both file and draft
-/pw:start                                     → Same as above
-```
-
-> 💡 **Smart slug:** If no slug is provided, starts as `untitled-N`.
-> After the Clarify phase completes, the extension automatically renames
-> the workflow based on context (via `autoRenameFromDraft`).
-
-### Cleanup
-
-```
-/pw:clean           → Archive workflows stalled >4h
-/pw:clean hours=24  → Custom stall threshold
-```
-
----
-
-## 📊 Workflow Stages (Phases)
-
-The workflow has **7 stages** that match exactly with `/skill:cali-product-workflow`:
-
-| # | Stage | Skill Reference | Description |
-|---|-------|-----------------|-------------|
-| 0 | **Clarify** | Fase 0 | Initial questions, auto-discovery, workflow setup |
-| 1 | **Shape** | Fase 1 | Shape Up Planning — understand, scope, risks |
-| 2 | **Interface** | Fase 2 | Interface Brainstorming (conditional) |
-| 3 | **Critique** | Fase 3 | Plan Critique — gap analysis |
-| 4 | **Gate** | Fase 4 | Review Gate — Plannotator approval |
-| 5 | **Planning** | Fase 5 | Tech Planning Sequencing |
-| 6 | **Execution** | Fase 6 | Supervisor + Scope Executor |
-
-### Stage Progression
-
-```
-Clarify → Shape → Interface → Critique → Gate → Planning → Execution
-   ○        ○         ○         ○         ○        ○          ○   (not started)
-   ▶        ○         ○         ○         ○        ○          ○   (Clarify active)
-   ✓        ✓         ▶         ○         ○        ○          ○   (Interface active)
-   ✓        ✓         ✓         ✓         ✓        ✓          ▶   (Execution active)
-   ✓        ✓         ✓         ✓         ✓        ✓          ✓   (completed)
-```
-
----
-
-## 🖥️ TUI Updates
-
-When a workflow is active, the **TUI is automatically updated** as the skill progresses.
-
-The TUI is designed to be **compact and glanceable** — a single line in the footer
-with the workflow slug, current phase, and contextual info.
-
-### What Triggers Updates
-
-| Trigger | TUI Change | Example |
-|---------|-----------|---------|
-| `/product-workflow-start` | **Adds** compact footer | `auth-system │ ◆ Shape 3/7 │ 3 assumptions` |
 | Skill advances phase | **Updates** footer | `auth-system │ ◆ Interface 3/7 │ 5 proposals` |
 | `/product-workflow-pause` | Footer changes to PAUSED | `⏸ auth-system` |
 | `/product-workflow-resume` | Footer returns to normal | `auth-system │ ◆ Shape 3/7 │ ...` |
@@ -166,7 +95,7 @@ All TUI elements use clear, user-facing names:
 
 | Element | Label | Purpose |
 |---------|-------|---------|
-| Footer status | `▶ {slug} [{stage}]` | Current workflow + stage |
+| Footer status | `▶ {name} [{stage}]` | Current workflow + stage |
 | Widget | `▶ Workflow:` | Shows full workflow info |
 | Notification | `▶ Workflow: {name} — Phase {n}: {stage}` | Phase transitions |
 
@@ -230,12 +159,43 @@ cp ~/Development/pi-product-workflow/AGENTS.md ~/.pi/agent/AGENTS.md
 
 ---
 
-## 📁 Tracking Files
+## 📁 Tracking & Artifact Files
 
-| File | Location | Purpose |
-|------|----------|---------|
+| File / Directory | Location | Purpose |
+|-----------------|----------|---------|
+| `.cali-product-workflow/` | Project root | Plan artifacts (specs, interfaces, critiques, receipts, checkpoints) |
 | `cali-product-workflow.json` | Project root | Local workflow state |
-| `.cali-product-workflow-global.json` | Home directory | Cross-project workflows |
+| `.cali-product-workflow-global.json` | Home directory | Cross-project workflow tracking |
+
+### Artifact Directory Layout
+
+```
+.cali-product-workflow/
+└── {YYYY-MM-DD}/
+    └── {_dir}/          # Stable hash-based directory (never changes on rename)
+        ├── index.json            # Auto-discovery metadata
+        ├── specs/                # Shape Up output
+        │   └── spec-product_v{N}.md
+        ├── interfaces/           # Interface proposals
+        │   └── interfaces_v{N}.md
+        ├── plans/                # Tech plans + scopes
+        │   ├── spec-tech_v{N}.md
+        │   └── scopes/
+        ├── critiques/            # Plan critique reports
+        │   └── critique-report_v{N}.md
+        ├── strategic/            # Strategic analysis outputs (Phase 0b)
+        │   ├── jtbd-analysis.md
+        │   ├── evolutionary-analysis.md
+        │   ├── opportunity-map.md
+        │   ├── market-analysis.md
+        │   ├── short-cycle-analysis.md
+        │   └── strategic-insights.md
+        ├── approvals/            # Review gate receipts
+        │   └── *.receipt.md
+        └── sessions/             # Resume checkpoints
+            └── {session-id}/
+                └── checkpoint.json
+```
 
 ---
 

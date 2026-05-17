@@ -1,6 +1,6 @@
 // ── Constants ────────────────────────────────────────────────────────
 
-export const WORKFLOW_DIR = "product-workflow";
+export const WORKFLOW_DIR = ".cali-product-workflow";
 export const TRACKING_FILE = "cali-product-workflow.json";
 export const GLOBAL_TRACKING_FILE = ".cali-product-workflow-global.json";
 export const SCHEMA_URL =
@@ -53,6 +53,7 @@ export interface Workflow {
   created: string;
   updated: string;
   cwd?: string;
+  worktreePath?: string;  // Path to git worktree if created for execution
 }
 
 export interface TrackingData {

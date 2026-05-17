@@ -32,6 +32,12 @@ Thumbs.db
 cali-product-workflow.json
 .cali-product-workflow-global.json
 
+# Product workflow plan artifacts (auto-generated)
+.cali-product-workflow/
+
+# Git worktrees for parallel workflow execution
+.worktrees/
+
 # Test coverage
 coverage/
 

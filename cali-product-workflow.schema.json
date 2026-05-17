@@ -36,15 +36,15 @@
   "definitions": {
     "workflow": {
       "type": "object",
-      "required": ["slug", "status", "phases"],
+      "required": ["name", "status", "phases"],
       "properties": {
-        "slug": {
-          "type": "string",
-          "description": "Unique workflow identifier (e.g., 'feature-login')"
-        },
         "name": {
           "type": "string",
-          "description": "Human-readable workflow name"
+          "description": "Human-readable workflow identifier (e.g., 'feature-login')"
+        },
+        "slug": {
+          "type": "string",
+          "description": "[Deprecated] Legacy field, use name instead"
         },
         "description": {
           "type": "string",

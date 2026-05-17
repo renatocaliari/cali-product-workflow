@@ -49,18 +49,26 @@ function getGlobalTrackingPath(): string {
 // ── Project root detection ───────────────────────────────────────────
 
 /**
- * Walk up from `cwd` looking for the project root that contains
- * `product-workflow/` directory or `cali-product-workflow.json` tracking file.
- * Returns the first matching ancestor, or the original cwd if none found.
+ * Resolve the project root for workflow tracking.
+ * Checks `cwd` first, then walks up at most 1 level (for git repos where
+ * the user's shell is in a subdirectory but the project root has tracking).
+ * Returns `cwd` if no tracking found anywhere — creates fresh tracking there.
+ *
+ * IMPORTANT: Do NOT walk up more than 1 level. An unbounded walk can
+ * incorrectly resolve to a parent directory (e.g. ~/Development/) that
+ * happens to have tracking files from a completely different project.
  */
 export function resolveProjectDir(cwd: string): string {
-  let dir = cwd;
-  while (dir !== "/") {
-    if (existsSync(join(dir, WORKFLOW_DIR)) || existsSync(join(dir, TRACKING_FILE))) {
-      return dir;
-    }
-    dir = dirname(dir);
+  // Exact cwd match first
+  if (existsSync(join(cwd, WORKFLOW_DIR)) || existsSync(join(cwd, TRACKING_FILE))) {
+    return cwd;
   }
+  // One level up (handles git repos where user is inside src/ but tracking is at root)
+  const parent = dirname(cwd);
+  if (parent !== "/" && (existsSync(join(parent, WORKFLOW_DIR)) || existsSync(join(parent, TRACKING_FILE)))) {
+    return parent;
+  }
+  // Nothing found — create fresh tracking in cwd
   return cwd;
 }
 
@@ -220,7 +228,7 @@ export function renameWorkflow(
 
   // 3. index.json
   const ds = getDateStamp(new Date(wf.created));
-  const idxPath = join(cwd, "product-workflow", ds, oldName, "index.json");
+  const idxPath = join(cwd, WORKFLOW_DIR, ds, oldName, "index.json");
   if (existsSync(idxPath)) {
     try {
       const idx = JSON.parse(readFileSync(idxPath, "utf-8"));
@@ -250,7 +258,7 @@ interface DiskWorkflow {
 }
 
 /**
- * Scan product-workflow/<date>/<dirHash>/index.json on disk and return
+ * Scan .cali-product-workflow/<date>/<dirHash>/index.json on disk and return
  * all workflow entries found, regardless of what the tracking file says.
  */
 export function scanWorkflowDirs(cwd: string): DiskWorkflow[] {
@@ -400,4 +408,47 @@ export function readSourceFile(sourcePath: string): string | null {
 export function truncateText(text: string, maxLen: number): string {
   if (text.length <= maxLen) return text;
   return text.slice(0, maxLen - 100) + "\n\n[... truncated ...]";
+}
+
+/**
+ * Detect if the current working directory is inside a git worktree.
+ * Returns true if .git is a file (pointing to worktree metadata)
+ * or if `git rev-parse --git-dir` returns a path under .git/worktrees/.
+ */
+export function isInsideWorktree(cwd: string): boolean {
+  try {
+    const { execSync } = require("child_process");
+    const gitDir = execSync("git rev-parse --git-dir", { cwd, encoding: "utf-8" }).trim();
+    return gitDir.includes(".git/worktrees/");
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Get the default branch name (main/master) from remote origin, or fallback to "main".
+ */
+export function getDefaultBranch(cwd: string): string {
+  try {
+    const { execSync } = require("child_process");
+    const remote = execSync("git remote show origin 2>/dev/null || true", { cwd, encoding: "utf-8" });
+    const match = remote.match(/HEAD branch:\s*(\S+)/);
+    return match ? match[1] : "main";
+  } catch {
+    return "main";
+  }
+}
+
+/**
+ * Generate a worktree directory name from a workflow name and date.
+ */
+export function worktreeDirName(name: string, date?: string): string {
+  return `pw-${name}-${ds}`;
+}
+
+/**
+ * Generate a branch name for a workflow worktree.
+ */
+export function worktreeBranchName(name: string, date?: string): string {
+  return `pw/${name}/${ds}`;
 }

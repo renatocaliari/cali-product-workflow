@@ -248,7 +248,7 @@ function cmdPause(_pi: ExtensionAPI, _args: string, ctx: CmdCtx) {
   reply(ctx, `⏸ Workflow '${wf.name}' paused.`);
 }
 
-function cmdResume(_pi: ExtensionAPI, args: string, ctx: CmdCtx) {
+function cmdResume(pi: ExtensionAPI, args: string, ctx: CmdCtx) {
   const wd = resolveProjectDir(ctx.cwd);
   const parsed = parseArgs(args);
   const name = parsed.name || parsed._[0];
@@ -260,9 +260,24 @@ function cmdResume(_pi: ExtensionAPI, args: string, ctx: CmdCtx) {
     : t?.workflows.find(w => w.status === "paused");
 
   if (!paused) {
+    // Fallback: check for in-progress workflows (e.g. after a crash)
+    const inProgress = name
+      ? t?.workflows.find(w => w.name === name && w.status === "in-progress")
+      : t?.workflows.find(w => w.status === "in-progress");
+
+    if (inProgress) {
+      updateFooter(ctx, wd);
+      reply(ctx, `▶️ '${inProgress.name}' resuming from ${PHASE_NAMES[inProgress.currentPhase]}...`);
+      pi.sendUserMessage(
+        `/skill:cali-product-workflow\n\n[RESUME: workflow '${inProgress.name}', current phase: ${inProgress.currentPhase} (${PHASE_NAMES[inProgress.currentPhase]}). Auto-Discovery will find this in-progress workflow. User already confirmed via /pw:resume — proceed without asking, jump to the current phase and continue from there.]`,
+        { deliverAs: "followUp" }
+      );
+      return;
+    }
+
     replyWarn(ctx, name
-      ? `Paused workflow '${name}' not found. /pw:ls`
-      : "No paused Workflow."
+      ? `Workflow '${name}' not found. /pw:ls`
+      : "No paused or active Workflow."
     );
     return;
   }
@@ -348,7 +363,7 @@ function cmdList(_pi: ExtensionAPI, args: string, ctx: CmdCtx) {
 
   // ── /pw:ls all ─────────────────────────────────────────────────
   if (parsed._.includes("all") || parsed.all !== undefined) {
-    // Scan all directories that have product-workflow/ subfolders
+    // Scan all directories that have .cali-product-workflow/ subfolders
     const globalTracking = readGlobalTracking();
     const allProjects = new Map<string, string[]>();  // dir → [name, ...]
 
@@ -361,7 +376,7 @@ function cmdList(_pi: ExtensionAPI, args: string, ctx: CmdCtx) {
       }
     }
 
-    // Also scan product-workflow/ in known common dirs
+    // Also scan .cali-product-workflow/ in known common dirs
     const homeDev = homedir() + "/Development";
     const candidates = [
       wd,
