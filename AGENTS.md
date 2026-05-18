@@ -65,12 +65,29 @@ npm publish --access public
 
 ```
 pi-product-workflow/
-├── skills/              # 13 pi skills
-│   ├── cali-product-workflow/        # Main workflow skill
-│   └── ...
-├── extensions/          # pi extension
+├── skills/
+│   ├── workflow/                    # 1 orchestrator
+│   │   └── cali-product-workflow/
+│   ├── strategic-analysis/          # 5 exploration skills (Phase 0b)
+│   │   ├── cali-product-job-to-be-done/
+│   │   ├── cali-product-evolutionary-principles/
+│   │   ├── cali-product-opportunity-mapping/
+│   │   ├── cali-product-multi-method-market-analysis/
+│   │   └── cali-product-short-cycle/
+│   ├── domain-libraries/            # 8 tactical playbooks (Phase 0c)
+│   │   ├── cali-product-ads/
+│   │   ├── cali-product-business-models/
+│   │   ├── cali-product-health/
+│   │   ├── cali-product-marketplace-playbook/
+│   │   ├── cali-product-open-source/
+│   │   ├── cali-product-pricing/
+│   │   ├── cali-product-promotions/
+│   │   └── cali-product-trust-building/
+│   └── execution/                   # 1 autonomous executor
+│       └── cali-product-scope-executor/
+├── extensions/
 │   └── cali-product-workflow/
-└── scripts/             # Helper scripts
+└── scripts/
 ```
 
 ## Commands

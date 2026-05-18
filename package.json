@@ -26,21 +26,21 @@
   "pi": {
     "extensions": ["./extensions/cali-product-workflow"],
     "skills": [
-      "./skills/cali-product-workflow",
-      "./skills/cali-product-short-cycle",
-      "./skills/cali-product-opportunity-mapping",
-      "./skills/cali-product-job-to-be-done",
-      "./skills/cali-product-evolutionary-principles",
-      "./skills/cali-product-multi-method-market-analysis",
-      "./skills/cali-product-scope-executor",
-      "./skills/cali-product-ads",
-      "./skills/cali-product-business-models",
-      "./skills/cali-product-health",
-      "./skills/cali-product-marketplace-playbook",
-      "./skills/cali-product-open-source",
-      "./skills/cali-product-pricing",
-      "./skills/cali-product-promotions",
-      "./skills/cali-product-trust-building"
+      "./skills/workflow/cali-product-workflow",
+      "./skills/strategic-analysis/cali-product-short-cycle",
+      "./skills/strategic-analysis/cali-product-opportunity-mapping",
+      "./skills/strategic-analysis/cali-product-job-to-be-done",
+      "./skills/strategic-analysis/cali-product-evolutionary-principles",
+      "./skills/strategic-analysis/cali-product-multi-method-market-analysis",
+      "./skills/execution/cali-product-scope-executor",
+      "./skills/domain-libraries/cali-product-ads",
+      "./skills/domain-libraries/cali-product-business-models",
+      "./skills/domain-libraries/cali-product-health",
+      "./skills/domain-libraries/cali-product-marketplace-playbook",
+      "./skills/domain-libraries/cali-product-open-source",
+      "./skills/domain-libraries/cali-product-pricing",
+      "./skills/domain-libraries/cali-product-promotions",
+      "./skills/domain-libraries/cali-product-trust-building"
     ]
   },
   "peerDependencies": {

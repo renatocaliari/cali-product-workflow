@@ -83,6 +83,27 @@ See `references/strategic-exploration.md` and `procedures/fase-0-start.md`.
 
 ---
 
+## 📚 Complementary Domain Libraries (Phase 0c)
+
+Playbooks de domínio disponíveis para consulta tática durante planejamento/execução.
+A LLM os carrega automaticamente quando detecta relevância no pedido do usuário (Phase 0c).
+
+| Library | Skill | Cobre |
+|---|---|---|
+| **Ads** | `cali-product-ads` | Transtheoretical Model, 5 estágios de awareness |
+| **Business Models** | `cali-product-business-models` | Redução de custo, geração de receita (Strategyn) |
+| **Health** | `cali-product-health` | Signals in tension, sucesso x contra-peso |
+| **Marketplace Playbook** | `cali-product-marketplace-playbook` | 19 táticas de estímulo a marketplaces |
+| **Open Source** | `cali-product-open-source` | Modelos de negócio OSS, fair code |
+| **Pricing** | `cali-product-pricing` | Exchange base, consumo, alinhamento, percepção |
+| **Promotions** | `cali-product-promotions` | MAGIC framework, 4 estratégias de lançamento |
+| **Trust Building** | `cali-product-trust-building` | 10 pilares, garantias, percepção |
+
+When signaled, the LLM uses `ask_user_question({ multiSelect: true, options: [...] })` to offer these.
+If the user's request is purely domain-specific (e.g., "help me define pricing"), the flow may route directly to that skill instead of proceeding to Shape Up.
+
+---
+
 ## 📋 Phase Index
 
 Follow the sequence below. For each phase, read the procedure in `procedures/` and the indicated references.

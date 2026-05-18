@@ -192,7 +192,7 @@ Run \`safe-change\` from **pi-agent-codebase-workflows** (PriNova) BEFORE procee
 
 **If user chooses "No":** proceed directly to Phase 0b.
 
-**If user selects no workflow option:** proceed directly to implementation,
+**If user selects no workflow option:** proceed to Phase 0c (domain detection may offer direct skill routing),
 but safe-change is still offered.
 
 ### 0b. Strategic Exploration (always ask)
@@ -252,7 +252,62 @@ Save results to .cali-product-workflow/{YYYY-MM-DD}/{_dir}/strategic/${approach.
 3. Consolidate into `strategic-insights.md`
 4. Incorporate outputs as Shape Up input
 
-**If nothing selected:** proceed directly to Phase 1.
+**If nothing selected:** proceed directly to Phase 0c.
+
+### 0c. Domain Context Detection (conditional — LLM-driven)
+
+**After Phase 0a and 0b**, the LLM analyzes the user's original request for **domain signals**:
+
+| Sinal no Input do Usuário | Domínio | Skill |
+|---|---|---|
+| "preço", "precificar", "quanto cobrar", "subscription", "assinatura" | Pricing | `cali-product-pricing` |
+| "lançar", "promoção", "black friday", "cupom", "desconto" | Promotions | `cali-product-promotions` |
+| "anúncio", "facebook ads", "google ads", "tráfego pago", "mídia paga" | Ads | `cali-product-ads` |
+| "confiança", "garantia", "prova social", "credibilidade" | Trust | `cali-product-trust-building` |
+| "modelo de negócio", "receita", "monetizar", "como ganhar dinheiro" | Business Models | `cali-product-business-models` |
+| "open source", "código aberto", "community edition" | Open Source | `cali-product-open-source` |
+| "saúde do produto", "métricas de produto", "vício", "bem-estar" | Health | `cali-product-health` |
+| "marketplace", "marketplace supply", "marketplace demand" | Marketplace | `cali-product-marketplace-playbook` |
+
+**Two detection modes:**
+
+**Mode A — Purely domain-specific request** (user asks only about a domain topic):
+The user's request is exclusively about one of these domains (e.g., "help me define a pricing strategy").
+→ Route directly to the detected skill. Do NOT proceed to Shape Up.
+→ The user can always choose to continue to Shape Up afterwards.
+
+**Mode B — General product request with domain overlap** (user asks for product planning but mentions domains):
+The user wants full product planning but the input also contains domain signals.
+→ Offer domain libraries as **complementary context** using `ask_user_question`:
+
+```typescript
+ask_user_question({
+  questions: [{
+    question: `Seu pedido menciona áreas específicas. Deseja carregar playbooks de referência para enriquecer o planejamento?
+Cada playbook fornece frameworks e referências sobre o domínio.`,
+    header: "Domain Libraries",
+    multiSelect: true,
+    options: [
+      // Only include options for detected domains, e.g.:
+      // {
+      //   label: "Pricing",
+      //   description: "Exchange base, consumption control, interest alignment, perception techniques"
+      // },
+      // {
+      //   label: "Promotions",
+      //   description: "MAGIC framework, Loss Leader, Gift Card Sale, Limited Package"
+      // },
+      // ... (only the detected ones)
+    ]
+  }]
+})
+```
+
+**If user selects libraries:**
+1. Load the selected skill(s) content as additional context
+2. Proceed to Phase 1 (Shape Up) with domain context enriched
+
+**If nothing detected or user declines:** proceed directly to Phase 1 (if 0a had selections) or end.
 
 ### Auto-chaining rules
 
