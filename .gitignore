@@ -28,6 +28,9 @@ Thumbs.db
 .pi/
 .pi-*
 
+# OpenCode agent plans (local session artifacts)
+.opencode/
+
 # Local workflow tracking (auto-generated at runtime)
 cali-product-workflow.json
 .cali-product-workflow-global.json
