@@ -98,7 +98,7 @@
     "test:artifacts": "vitest run tests/artifacts",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:ci": "vitest run --reporter=junit --outputFile=test-results/junit.xml",
+    "test:ci": "./scripts/test-ci.sh",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit"
   },

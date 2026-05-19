@@ -4,7 +4,7 @@
 
 ---
 
-## Comando Específico (PI)
+## Specific Command (PI)
 
 ```bash
 safe-change
@@ -17,28 +17,28 @@ safe-change
 
 ---
 
-## Quando Usar
+## When to Use
 
 | Phase | Purpose |
 |-------|---------|
-| Phase 1b (Setup) | Validar impacto antes de planejar |
+| Phase 1b (Setup) | Validate impact before planning |
 
 ---
 
 ## Output
 
-Retorna análise de:
-- Arquivos que serão afetados
-- Possíveis regressões
-- Warnings e riscos
+Returns analysis of:
+- Files that will be affected
+- Possible regressions
+- Warnings and risks
 
 ---
 
-## Fallback (Outros Harnesses)
+## Fallback (Other Harnesses)
 
-Se `safe-change` não disponível:
-- Verificar manualmente arquivos relevantes com `git diff`
-- Rodar testes existentes para verificar regressions
-- Documentar análise manual
+If `safe-change` is not available:
+- Manually check relevant files with `git diff`
+- Run existing tests to verify regressions
+- Document manual analysis
 
-**Abstração:** "Verificação de regressão antes de mudanças"
+**Abstraction:** "Regression check before changes"

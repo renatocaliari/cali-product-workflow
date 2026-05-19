@@ -4,7 +4,7 @@
 
 ---
 
-## Comando Específico (PI)
+## Specific Command (PI)
 
 ```bash
 /supervise [outcome]
@@ -17,27 +17,27 @@
 
 ---
 
-## Quando Usar
+## When to Use
 
 | Phase | Purpose |
 |-------|---------|
-| Phase 11 (Execution) | Steering durante execução |
+| Phase 11 (Execution) | Steering during execution |
 
 ---
 
-## Ativação
+## Activation
 
-**⚠️ IMPORTANTE:** Nunca ativar durante Phases 3-10.
-O supervisor re-submete Plannotator, causando loops.
+**⚠️ IMPORTANT:** Never activate during Phases 3-10.
+Supervisor re-submits Plannotator, causing loops.
 
-Ativar APENAS quando INICIAR cada scope na Phase 11.
+Activate ONLY when STARTING each scope in Phase 11.
 
 ---
 
-## Fallback (Outros Harnesses)
+## Fallback (Other Harnesses)
 
-Se `/supervise` não disponível:
-- Monitorar execução manualmente
-- Usar checkpoints para progress tracking
+If `/supervise` is not available:
+- Monitor execution manually
+- Use checkpoints for progress tracking
 
-**Abstração:** "Steering de execução com direcionamento de outcome"
+**Abstraction:** "Execution steering with outcome direction"

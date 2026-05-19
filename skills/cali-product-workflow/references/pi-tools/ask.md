@@ -4,7 +4,7 @@
 
 ---
 
-## Comando Específico (PI)
+## Specific Command (PI)
 
 ```typescript
 ask_user_question({
@@ -46,7 +46,7 @@ ask_user_question({
 
 ## Patterns Reference
 
-**Usar padrões de `phases/ask-patterns.md`:**
+**Use patterns from `phases/ask-patterns.md`:**
 
 | Pattern | Phase | Purpose |
 |---------|-------|---------|
@@ -60,11 +60,11 @@ ask_user_question({
 
 ## Multi-Select Rule
 
-Quando `multiSelect: true`:
-- **NÃO** incluir "None", "Skip", "All" como options
-- Usuário pode selecionar **nada** para significar "none"
-- Selecionar **tudo** é permitido
-- Seleções são explícitas — não precisa de "select all"
+When `multiSelect: true`:
+- **DO NOT** include "None", "Skip", "All" as options
+- User can select **nothing** to mean "none"
+- Selecting **everything** is allowed
+- Selections are explicit — no need for "select all"
 
 ---
 
@@ -96,22 +96,22 @@ These are auto-added and must NOT be in options:
 
 ---
 
-## Fallback (Outros Harnesses)
+## Fallback (Other Harnesses)
 
-Se `ask_user_question` não disponível:
-- Listar opções como markdown numerado
-- User responde com número
-- Processar resposta como seleção
+If `ask_user_question` is not available:
+- List options as numbered markdown
+- User responds with number
+- Process response as selection
 
-**Exemplo fallback:**
+**Fallback example:**
 ```markdown
-## Opções
+## Options
 
-1. Opção A — description
-2. Opção B — description
+1. Option A — description
+2. Option B — description
 
-Responda com o número da escolha:
+Respond with the number of your choice:
 > 1
 ```
 
-**Abstração:** "Questão estruturada com opções e resposta do usuário"
+**Abstraction:** "Structured question with options and user response"

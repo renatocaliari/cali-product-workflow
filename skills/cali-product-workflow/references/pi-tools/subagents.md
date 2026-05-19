@@ -4,7 +4,7 @@
 
 ---
 
-## Comando Específico (PI)
+## Specific Command (PI)
 
 ```typescript
 subagent({
@@ -97,7 +97,7 @@ subagent({
 
 ## Output Files
 
-Para tasks que salvam output, usar path significativo:
+For tasks that save output, use meaningful paths:
 ```
 .cali-product-workflow/{YYYY-MM-DD}/{_dir}/interfaces/interfaces_v{N}.md
 .cali-product-workflow/.../strategic/{name}.md
@@ -105,11 +105,11 @@ Para tasks que salvam output, usar path significativo:
 
 ---
 
-## Fallback (Outros Harnesses)
+## Fallback (Other Harnesses)
 
-Se `subagent` não disponível:
-- Executar tarefa diretamente com preservação de contexto
-- Manter outputs em arquivos para continuação
-- Usar equivalente do harness (e.g., Fusion's `fn_delegate_task`)
+If `subagent` is not available:
+- Execute task directly while preserving context
+- Keep outputs in files for continuation
+- Use harness equivalent (e.g., Fusion's `fn_delegate_task`)
 
-**Abstração:** "Delegação de tarefas paralelas com agente especializado"
+**Abstraction:** "Parallel task delegation with specialized agent"

@@ -4,7 +4,7 @@
 
 ---
 
-## Comando Específico (PI)
+## Specific Command (PI)
 
 ```bash
 plannotator annotate <file>.md --gate
@@ -18,7 +18,7 @@ plannotator annotate <file>.md --gate
 
 ---
 
-## Quando Usar
+## When to Use
 
 | Phase | Purpose | File |
 |-------|---------|------|
@@ -30,22 +30,22 @@ plannotator annotate <file>.md --gate
 
 ## ⚠️ CRITICAL: --gate Flag
 
-**O `--gate` flag é OBRIGATÓRIO.**
+**The `--gate` flag is MANDATORY.**
 
-| Sem `--gate` | Com `--gate` |
-|--------------|--------------|
-| ❌ Sem botão Approve | ✅ Botão Approve visível |
-| ❌ Sem blocking | ✅ Bloqueia até aprovação |
-| ❌ Abre em background | ✅ Abre como review ativo |
-| ❌ Pode ser dispensado | ✅ Força decisão |
+| Without `--gate` | With `--gate` |
+|------------------|--------------|
+| ❌ No Approve button | ✅ Approve button visible |
+| ❌ No blocking | ✅ Blocks until approval |
+| ❌ Opens in background | ✅ Opens as active review |
+| ❌ Can be skipped | ✅ Forces decision |
 
-**Se esquecer `--gate`:** O UI abre mas o usuário não pode aprovar, e o workflow continua incorretamente.
+**If you forget `--gate`:** UI opens but user cannot approve, and workflow continues incorrectly.
 
 ---
 
 ## After Approval
 
-Após aprovação do usuário:
+After user approval:
 
 ### 1. Stamp YAML frontmatter
 ```yaml
@@ -66,15 +66,15 @@ EOF
 ```
 
 ### 3. File is frozen
-Futuras mudanças exigem nova versão + novo gate.
+Future changes require new version + new gate.
 
 ---
 
-## Fallback (Outros Harnesses)
+## Fallback (Other Harnesses)
 
-Se `plannotator` não disponível:
-- Usar visual review manual com approval tracking
-- Bloquear execução até confirmação explícita do reviewer
-- Documentar aprovação em arquivo de receipt manual
+If `plannotator` is not available:
+- Use manual visual review with approval tracking
+- Block execution until explicit reviewer confirmation
+- Document approval in manual receipt file
 
-**Abstração:** "Visual review gate com aprovação humana bloqueante"
+**Abstraction:** "Visual review gate with blocking human approval"

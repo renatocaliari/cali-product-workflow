@@ -4,7 +4,7 @@
 
 ---
 
-## Comando Específico (PI)
+## Specific Command (PI)
 
 ```bash
 /sisyphus [scope-name]
@@ -19,16 +19,16 @@ pause_goal
 
 ---
 
-## Quando Usar
+## When to Use
 
 | Phase | Purpose |
 |-------|---------|
 | Phase 11 (Execution) | Scoped implementation per scope |
-| After Tech Planning | Cada scope vira um goal |
+| After Tech Planning | Each scope becomes a goal |
 
 ---
 
-## Padrão para Scope Execution
+## Pattern for Scope Execution
 
 ```bash
 /sisyphus Scope: [scope-name]
@@ -50,7 +50,7 @@ Done when:
 
 ## Goal Generation (After Tech Planning)
 
-Para cada scope no spec-tech aprovado:
+For each scope in approved spec-tech:
 
 ```bash
 /sisyphus Scope: [scope-name]
@@ -62,14 +62,14 @@ Para cada scope no spec-tech aprovado:
 
 ---
 
-## Fallback (Outros Harnesses)
+## Fallback (Other Harnesses)
 
-Se goal system não disponível:
-- Usar todo tool para tracking de progresso
-- Criar checkpoint files para resume
-- Marcar `[DONE:n]` em responses
+If goal system is not available:
+- Use todo tool for progress tracking
+- Create checkpoint files for resume
+- Mark `[DONE:n]` in responses
 
-**Abstração:** "Goal com scopes tipados e critérios de aceite"
+**Abstraction:** "Goal with typed scopes and acceptance criteria"
 
 ---
 
