@@ -163,8 +163,11 @@ export default async function cmdStart(
   parsedInputStore.delete(sessionId);
 
   // 10. Output — use notify so user sees feedback immediately
+  const displayLabel = name.startsWith("untitled-")
+    ? `${name} (${dirHash})`
+    : finalName;
   const lines = [
-    `✅ Workflow '${finalName}' started!`,
+    `✅ Workflow '${displayLabel}' started!`,
     `Stage: ${PHASE_NAMES[0]}`,
     `Dir:   ${wfDir.replace(wd + "/", "")}`,
   ];
@@ -185,5 +188,5 @@ export default async function cmdStart(
 
   reply(ctx, lines.join("\n"));
 
-  pi.sendUserMessage("/skill:cali-product-workflow\n\n[Auto-Discovery: SKIP — workflow '" + finalName + "' recém-criado. Prossiga direto para Fase 1: Clarify.]", { deliverAs: "followUp" });
+  pi.sendUserMessage("/skill:cali-product-workflow\n\n[Auto-Discovery: SKIP — workflow '" + displayLabel + "' recém-criado. Prossiga direto para Fase 1: Clarify.]", { deliverAs: "followUp" });
 }

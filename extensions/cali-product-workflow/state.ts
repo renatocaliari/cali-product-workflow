@@ -158,7 +158,7 @@ export function generatePlaceholderName(): string {
   return `untitled-${untitledCounter}`;
 }
 
-/** Stable directory hash (never changes, survives rename) */
+/** Random directory hash (unique, no identity) */
 export function generateDirHash(): string {
   const ts = Date.now().toString(36).slice(-4);
   const rand = Math.random().toString(36).substring(2, 8);
