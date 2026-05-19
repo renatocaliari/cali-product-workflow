@@ -129,7 +129,7 @@ export default async function cmdStart(
   tracking.workflows.push(wf);
   writeTracking(wd, tracking);
 
-  // 6. Create directory (hash-based — stable)
+  // 6. Create directory (hash-based - stable)
   const ds = getDateStamp();
   const wfDir = join(wd, WORKFLOW_DIR, ds, dirHash);
   mkdirSync(wfDir, { recursive: true });
@@ -162,7 +162,7 @@ export default async function cmdStart(
   updateFooter(ctx, wd);
   parsedInputStore.delete(sessionId);
 
-  // 10. Output — use notify so user sees feedback immediately
+  // 10. Output - use notify so user sees feedback immediately
   const isUnnamed = !displayName;
   const wfId = hashToWorkflowId(dirHash);
   const displayLabel = isUnnamed ? wfId : finalName;
@@ -172,25 +172,26 @@ export default async function cmdStart(
   const folderPath = `${WORKFLOW_DIR}/${dateStamp}/${dirHash}`;
 
   const lines = [
-    `✅ Workflow '${displayLabel}' started!`,
-    `📁 ${folderPath}`,
+    `[OK] Workflow '${displayLabel}' started!`,
+    `[DIR] ${folderPath}`,
     `Stage: ${PHASE_NAMES[0]}`,
   ];
   if (draftText) {
-    lines.push(`\n📝 Draft:\n${draftText.slice(0, 300)}${draftText.length > 300 ? "..." : ""}`);
+    lines.push(`\n[DRAFT]:\n${draftText.slice(0, 300)}${draftText.length > 300 ? "..." : ""}`);
   }
   lines.push(
     "",
-    "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
-    "🤖 Skill loaded automatically:",
+    "------------------------------------------------------------",
+    "[BOT] Skill loaded automatically:",
     "",
     "  /skill:cali-product-workflow",
-    "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+    "------------------------------------------------------------",
   );
   if (isUnnamed) {
-    lines.push("", "💡 After Clarify, the workflow will be renamed automatically.");
+    lines.push("", "[TIP] After Clarify, the workflow will be renamed automatically.");
   }
 
   reply(ctx, lines.join("\n"));
 
-  pi.sendUserMessage("/skill:cali-product-workflow\n\n[Auto-Discovery: SKIP — workflow '" + displayLabel + "' recém-criado. Prossiga direto para Fase 1: Clarify.]", { deliverAs: "followUp" });
+  pi.sendUserMessage("/skill:cali-product-workflow\n\n[Auto-Discovery: SKIP - workflow '" + displayLabel + "' recently created. Proceed to Phase 1: Clarify.]", { deliverAs: "followUp" });
+}
