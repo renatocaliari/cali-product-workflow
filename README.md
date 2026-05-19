@@ -57,10 +57,10 @@ flowchart TB
     subgraph Testing["Testing (Software Only)"]
         direction TB
         TS["cali-testing-ai-code"]
-        test、绿色["Greenfield: test-unit, test-integration,<br/>test-security, test-behavior"]
-        test、棕色["Brownfield: test-regression,<br/>test-characterization, test-impact"]
-        TS --> test、绿色
-        TS --> test、棕色
+        testA["Greenfield:<br/>test-unit, test-integration,<br/>test-security, test-behavior"]
+        testB["Brownfield:<br/>test-regression,<br/>test-characterization,<br/>test-impact"]
+        TS --> testA
+        TS --> testB
     end
     
     subgraph Domain["Domain Libraries (Reference)"]
