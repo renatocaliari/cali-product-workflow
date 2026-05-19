@@ -10,9 +10,14 @@
 
 import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const PROJECT_ROOT = '/Users/cali/Development/pi-product-workflow';
+// Dynamic PROJECT_ROOT: resolve from test file location
+// tests/integration/sandbox-install.test.ts → ../../.. = project root
+const __filename = fileURLToPath(import.meta.url);
+const __testDir = dirname(__filename); // tests/integration
+const PROJECT_ROOT = join(__testDir, '..', '..'); // project root
 
 describe('Sandbox Install Verification', () => {
   
