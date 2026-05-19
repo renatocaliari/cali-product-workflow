@@ -355,7 +355,9 @@ function cmdList(_pi: ExtensionAPI, args: string, ctx: CmdCtx) {
       const icon = dw.status === "in-progress" ? "◆" :
         dw.status === "paused" ? "⏸" :
         dw.status === "completed" ? "✓" : "○";
-      lines.push(`  ${icon} ${dw.name} — ${PHASE_NAMES[dw.currentPhase] || "?"} (${dw.status})`);
+      const folder = `${dw.dateStamp}/${dw.dirHash}`;
+      lines.push(`  ${icon} ${dw.name}`);
+      lines.push(`     📁 ${folder}`);
     }
     reply(ctx, lines.join("\n"));
     return;
@@ -384,6 +386,7 @@ function cmdList(_pi: ExtensionAPI, args: string, ctx: CmdCtx) {
       ...Array.from(allProjects.keys()).filter(d => d !== "?" && d !== wd && d !== homeDev),
     ];
     const seen = new Set<string>();
+    const seenInProjects = new Set<string>();
     for (const dir of [...new Set(candidates)]) {
       const diskWfs = scanWorkflowDirs(dir);
       if (diskWfs.length === 0) continue;
@@ -391,10 +394,15 @@ function cmdList(_pi: ExtensionAPI, args: string, ctx: CmdCtx) {
       for (const dw of diskWfs) {
         if (seen.has(dw.name)) continue;
         seen.add(dw.name);
+        const key = `${dw.name}:${dir}`;
+        if (seenInProjects.has(key)) continue;
+        seenInProjects.add(key);
         const icon = dw.status === "in-progress" ? "◆" :
           dw.status === "paused" ? "⏸" :
           dw.status === "completed" ? "✓" : "○";
-        lines.push(`  ${icon} ${dw.name} — ${PHASE_NAMES[dw.currentPhase] || "?"} (${dw.status})`);
+        const folder = `${dw.dateStamp}/${dw.dirHash}`;
+        lines.push(`  ${icon} ${dw.name}`);
+        lines.push(`     📁 ${folder}`);
       }
       lines.push("");
     }
@@ -432,7 +440,12 @@ function cmdList(_pi: ExtensionAPI, args: string, ctx: CmdCtx) {
         w.status === "paused" ? "⏸" :
         w.status === "completed" ? "✓" : "○";
       const note = w.status === "archived" ? " (archived)" : "";
-      lines.push(`  ${icon} ${w.name} — ${PHASE_NAMES[w.currentPhase]}${note}`);
+      // Get folder path from disk scan for this workflow
+      const diskWfs = scanWorkflowDirs(wd);
+      const diskWf = diskWfs.find(d => d.name === w.name);
+      const folder = diskWf ? `${diskWf.dateStamp}/${diskWf.dirHash}` : "?";
+      lines.push(`  ${icon} ${w.name}${note}`);
+      lines.push(`     📁 ${folder}`);
     }
     lines.push("");
   }
@@ -448,8 +461,12 @@ function cmdList(_pi: ExtensionAPI, args: string, ctx: CmdCtx) {
         const icon = w.status === "in-progress" ? "◆" :
           w.status === "paused" ? "⏸" :
           w.status === "completed" ? "✓" : "○";
+        // Get folder from disk if available
+        const diskWfs = w.cwd ? scanWorkflowDirs(w.cwd) : [];
+        const diskWf = diskWfs.find(d => d.name === w.name);
+        const folder = diskWf ? `${diskWf.dateStamp}/${diskWf.dirHash}` : "?";
         lines.push(`  ${icon} ${w.name} — ${PHASE_NAMES[w.currentPhase]} (${w.status})`);
-        lines.push(`     ${w.cwd}`);
+        lines.push(`     📁 ${folder}`);
       }
     }
   }

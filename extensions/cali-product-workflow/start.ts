@@ -7,7 +7,7 @@ import {
   parsedInputStore, readTracking, writeTracking,
   readGlobalTracking, writeGlobalTracking,
   getAllActiveWorkflows, resolveProjectDir,
-  toSafeName, generatePlaceholderName, generateDirHash, getDateStamp,
+  toSafeName, generateDirHash, hashToWorkflowId, getDateStamp,
   readSourceFile, truncateText
 } from "./state";
 import { updateFooter, showOrphanOverlay } from "./ui";
@@ -71,7 +71,10 @@ export default async function cmdStart(
     }
   }
 
-  // 2. Determine display name and directory hash
+  // 2. Generate dirHash FIRST (used for untitled ID and directory)
+  const dirHash = generateDirHash();
+
+  // 3. Determine display name (use hash for untitled)
   const displayName = userGivenName
     ? toSafeName(userGivenName)
     : draftText && draftText.length > 3
@@ -82,10 +85,9 @@ export default async function cmdStart(
 
   const name = (displayName && displayName.length >= 2)
     ? displayName
-    : generatePlaceholderName();
-  const dirHash = generateDirHash();
+    : hashToWorkflowId(dirHash); // untitled = hash-based ID
 
-  // 3. Load sources
+  // 4. Load sources
   let allSrc = "";
   for (const src of sources) {
     const content = readSourceFile(src);
@@ -95,7 +97,7 @@ export default async function cmdStart(
   let fullDraft = draftText ? `### Initial Draft\n\n${draftText}\n\n` : "";
   if (allSrc) fullDraft += allSrc;
 
-  // 4. Initialize tracking
+  // 5. Initialize tracking
   let tracking = readTracking(wd);
   if (!tracking) {
     tracking = {
@@ -105,11 +107,9 @@ export default async function cmdStart(
     };
   }
 
-  const finalName = tracking.workflows.some(w => w.name === name)
-    ? `${name}-${Date.now().toString(36).slice(-3)}`
-    : name;
+  const finalName = name; // hash-based untitled is already unique
 
-  // 5. Build workflow object
+  // 6. Build workflow object
   const wf: Workflow = {
     name: finalName,
     description: truncateText(draftText, 500) || "",
@@ -163,13 +163,18 @@ export default async function cmdStart(
   parsedInputStore.delete(sessionId);
 
   // 10. Output — use notify so user sees feedback immediately
-  const displayLabel = name.startsWith("untitled-")
-    ? `${name} (${dirHash})`
-    : finalName;
+  const isUnnamed = !displayName;
+  const wfId = hashToWorkflowId(dirHash);
+  const displayLabel = isUnnamed ? wfId : finalName;
+
+  // Build folder path for display
+  const dateStamp = getDateStamp();
+  const folderPath = `${WORKFLOW_DIR}/${dateStamp}/${dirHash}`;
+
   const lines = [
     `✅ Workflow '${displayLabel}' started!`,
+    `📁 ${folderPath}`,
     `Stage: ${PHASE_NAMES[0]}`,
-    `Dir:   ${wfDir.replace(wd + "/", "")}`,
   ];
   if (draftText) {
     lines.push(`\n📝 Draft:\n${draftText.slice(0, 300)}${draftText.length > 300 ? "..." : ""}`);
@@ -182,11 +187,10 @@ export default async function cmdStart(
     "  /skill:cali-product-workflow",
     "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
   );
-  if (name.startsWith("untitled-") && draftText) {
+  if (isUnnamed) {
     lines.push("", "💡 After Clarify, the workflow will be renamed automatically.");
   }
 
   reply(ctx, lines.join("\n"));
 
   pi.sendUserMessage("/skill:cali-product-workflow\n\n[Auto-Discovery: SKIP — workflow '" + displayLabel + "' recém-criado. Prossiga direto para Fase 1: Clarify.]", { deliverAs: "followUp" });
-}

@@ -7,8 +7,6 @@ import { WORKFLOW_DIR, TRACKING_FILE, GLOBAL_TRACKING_FILE, SCHEMA_URL, PHASE_NA
 
 export const parsedInputStore: Map<string, ParsedInput> = new Map();
 
-let untitledCounter = 0;
-
 // ── Input Parsing ────────────────────────────────────────────────────
 
 const FILE_REF_REGEX = /@[\w\-\/\.]+(?::\d+(?::\d+)?)?/g;
@@ -152,10 +150,12 @@ export function toSafeName(text: string): string {
     .slice(0, 40);
 }
 
-/** Placeholder display name when user hasn't provided context yet */
-export function generatePlaceholderName(): string {
-  untitledCounter++;
-  return `untitled-${untitledCounter}`;
+/** Short workflow ID from dirHash (unique identifier) */
+export function hashToWorkflowId(dirHash: string): string {
+  // Extract the random part of the hash (after timestamp)
+  // pw-a3b2c4-d5e6f8 → d5e6f8
+  const parts = dirHash.split("-");
+  return parts.length >= 3 ? `wf-${parts[2]}` : `wf-${parts[1] || dirHash}`;
 }
 
 /** Random directory hash (unique, no identity) */
@@ -163,6 +163,11 @@ export function generateDirHash(): string {
   const ts = Date.now().toString(36).slice(-4);
   const rand = Math.random().toString(36).substring(2, 8);
   return `pw-${ts}-${rand}`;
+}
+
+/** Legacy: placeholder name generator (kept for compatibility) */
+export function generatePlaceholderName(): string {
+  return `wf-${Date.now().toString(36).slice(-6)}`;
 }
 
 /** Readable date-stamped directory, e.g. "2026-05-16" */
