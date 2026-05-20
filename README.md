@@ -68,7 +68,7 @@ And the workflow begins asking questions, exploring scope, shaping the proposal,
 
 ## About the Author
 
-**[Renato Caliari](https://www.linkedin.com/in/calirenato82/)** — Product specialist with hands-on experience:
+**[Cali (Renato Caliari)](https://www.linkedin.com/in/calirenato82/)** — Product specialist with hands-on experience:
 
 ### 📚 Published Work
 
