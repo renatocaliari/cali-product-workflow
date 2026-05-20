@@ -83,7 +83,15 @@ export class CodexAdapter extends BaseAdapter {
   setSessionId(sessionId: string): void {
     this._sessionId = sessionId;
   }
-  
+
+  /**
+   * Set the API reference and ensure initialization.
+   * Mirrors PiAdapter behavior for consistency.
+   */
+  setAPI(api: unknown): void {
+    this.initialize();
+  }
+
   initialize(): void {
     if (this._initialized) return;
     

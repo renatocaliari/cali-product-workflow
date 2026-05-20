@@ -176,7 +176,7 @@ export function createAdapter(cli?: CLI): CLIAdapter {
 function createPiAdapter(): CLIAdapter {
   // Lazy import to avoid circular dependencies
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { createPiAdapter: makePiAdapter } = require("./pi/index.js");
+  const { createPiAdapter: makePiAdapter } = require("./pi/index.ts");
   return makePiAdapter();
 }
 
@@ -185,7 +185,7 @@ function createPiAdapter(): CLIAdapter {
  */
 function createOpenCodeAdapter(): CLIAdapter {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { createOpenCodeAdapter: makeOpenCodeAdapter } = require("./opencode/index.js");
+  const { createOpenCodeAdapter: makeOpenCodeAdapter } = require("./opencode/index.ts");
   return makeOpenCodeAdapter();
 }
 
@@ -194,7 +194,7 @@ function createOpenCodeAdapter(): CLIAdapter {
  */
 function createClaudeCodeAdapter(): CLIAdapter {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { createClaudeCodeAdapter: makeClaudeCodeAdapter } = require("./claude-code/index.js");
+  const { createClaudeCodeAdapter: makeClaudeCodeAdapter } = require("./claude-code/index.ts");
   return makeClaudeCodeAdapter();
 }
 
@@ -203,7 +203,7 @@ function createClaudeCodeAdapter(): CLIAdapter {
  */
 function createCodexAdapter(): CLIAdapter {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { createCodexAdapter: makeCodexAdapter } = require("./codex/index.js");
+  const { createCodexAdapter: makeCodexAdapter } = require("./codex/index.ts");
   return makeCodexAdapter();
 }
 
@@ -213,7 +213,7 @@ function createCodexAdapter(): CLIAdapter {
  */
 function makeGenericAdapter(): CLIAdapter {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { createGenericAdapter } = require("./generic.js");
+  const { createGenericAdapter } = require("./generic.ts");
   return createGenericAdapter();
 }
 

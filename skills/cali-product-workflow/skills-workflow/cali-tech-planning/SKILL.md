@@ -41,9 +41,9 @@ Read the `references/` files to guide the process:
 
 | File | Covers | When to read |
 |---|---|---|
-| `references/TECH-CONTEXT.md` | Tech planning context, prerequisites, workflow position | **Before starting** — sets planning context |
-| `references/SCOPES-AND-SEQUENCING.md` | Scope types (feature/optimization/spike + test-*), executor routing, sequencing principles | **During generation** — defines scope structure |
-| `references/TECH-OUTPUT.md` | Tech plan output format, frontmatter, receipts | **After generation** — formats output |
+| `references/tech-context.md` | Tech planning context, prerequisites, workflow position | **Before starting** — sets planning context |
+| `references/scopes-and-sequencing.md` | Scope types (feature/optimization/spike + test-*), executor routing, sequencing principles | **During generation** — defines scope structure |
+| `references/tech-output.md` | Tech plan output format, frontmatter, receipts | **After generation** — formats output |
 | `references/generation-principles.md` | Generation principles, constraints, quality standards | **During generation** — guides implementation |
 
 ## Process

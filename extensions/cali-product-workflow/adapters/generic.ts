@@ -25,7 +25,15 @@ export class GenericAdapter extends BaseAdapter {
   setEventDispatcher(dispatcher: EventDispatcher): void {
     this._eventDispatcher = dispatcher;
   }
-  
+
+  /**
+   * Set the API reference and ensure initialization.
+   * Mirrors PiAdapter behavior for consistency.
+   */
+  setAPI(api: unknown): void {
+    this.initialize();
+  }
+
   initialize(): void {
     console.log("[cali-product-workflow] Initialized generic adapter (limited functionality)");
     super.initialize();

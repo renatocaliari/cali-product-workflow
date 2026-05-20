@@ -40,6 +40,7 @@ export class PiAdapter extends BaseAdapter {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setAPI(pi: any): void {
     this._pi = pi;
+    this.initialize();
   }
   
   getCommandPrefix(): string {
@@ -128,7 +129,7 @@ export class PiAdapter extends BaseAdapter {
   private handleStart(pi: unknown, args: string, ctx: any): void {
     // Import and call the actual start command
     try {
-      const { default: cmdStart } = require("../../start.js");
+      const { default: cmdStart } = require("../../start.ts");
       cmdStart(pi as any, args, ctx);
     } catch (e) {
       console.error("[PiAdapter] Failed to load start command:", e);
@@ -245,7 +246,7 @@ let _piInstance: PiAdapter | null = null;
 export function createPiAdapter(pi?: any): PiAdapter {
   if (!_piInstance) {
     _piInstance = new PiAdapter(pi);
-    _piInstance.initialize();
+    if (pi) _piInstance.initialize();
   }
   return _piInstance;
 }

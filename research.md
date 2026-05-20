@@ -1,332 +1,316 @@
-# Research: CLI Plugin/Install Patterns for OpenCode, Claude Code, and Codex (2026)
+# Research: context-mode Dual-Install Pattern
 
 ## Summary
 
-Each CLI has a distinct plugin architecture: **OpenCode** uses npm packages + local JS/TS files in `opencode.json`, **Claude Code** uses marketplace manifests with component directories (`skills/`, `agents/`, `hooks/`, etc.), and **Codex** uses `.codex-plugin/plugin.json` manifests with skills, MCP, and app integrations. All three support local and distributed (npm/Git) plugin sources with configurable scopes.
-
----
+context-mode uses a dual-install pattern where the npm package (for CLI and global installs) is separate from the pi extension package (for pi agent integration). The npm package provides the MCP server and CLI tools, while a stub extension package in `.pi/extensions/` re-exports from the main package's build output.
 
 ## Findings
 
-### 1. OpenCode Plugin System
+### 1. Package Structure
 
-**Configuration File:** `opencode.json` (or `opencode.jsonc` for comments)
-
-#### Plugin Sources (3 ways):
-1. **Local files** — `.opencode/plugins/` (project) or `~/.config/opencode/plugins/` (global)
-2. **npm packages** — listed in `opencode.json`
-3. **Config-driven** — `~/.config/opencode/opencode.json` (user) or `opencode.json` (project)
-
-#### opencode.json Format:
-```jsonc
-{
-  "$schema": "https://opencode.ai/config.json",
-  "model": "anthropic/claude-sonnet-4-5",
-  "autoupdate": true,
-  "server": { "port": 4096 },
-  "plugins": ["opencode-helicone-session", "opencode-wakatime", "@my-org/custom-plugin"]
-}
-```
-
-#### Plugin File Structure:
-```
-.opencode/
-├── plugins/
-│   └── my-plugin.js       # Project-level plugin
-├── package.json           # Optional: local npm deps for plugins
-opencode.json              # Project config
-```
-
-#### Plugin Code Structure (JS/TS):
-```typescript
-import type { Plugin } from "@opencode-ai/plugin"
-
-export const MyPlugin: Plugin = async ({ project, client, $, directory, worktree }) => {
-  return {
-    "tool.execute.before": async (input, output) => {
-      // Hook implementation
-    },
-    tool: {
-      mytool: tool({
-        description: "Custom tool",
-        args: { foo: tool.schema.string() },
-        async execute(args, context) {
-          return `Result: ${args.foo}`
-        }
-      })
-    }
-  }
-}
-```
-
-#### Supported Hooks:
-- Session: `session.created`, `session.compacted`, `session.idle`, `session.diff`
-- Tools: `tool.execute.before`, `tool.execute.after`
-- Files: `file.edited`, `file.watcher.updated`
-- TUI: `tui.prompt.append`, `tui.command.execute`, `tui.toast.show`
-
-#### Load Order:
-1. Global config → 2. Project config → 3. Global plugins → 4. Project plugins
-
-[Source: OpenCode Plugins Docs](https://github.com/anomalyco/opencode/blob/9ad6588f/packages/web/src/content/docs/plugins.mdx)
-
----
-
-### 2. Claude Code Plugin System
-
-**Configuration Files:**
-- `.claude-plugin/plugin.json` — Plugin manifest (required)
-- `.claude/settings.json` — Installation scope settings
-- `marketplace.json` — Marketplace catalog
-
-#### Marketplace Structure:
-```
-claude-plugin-marketplace/
-├── .claude-plugin/
-│   └── marketplace.json      # Marketplace index
-├── greetings/
-│   ├── .claude-plugin/
-│   │   └── plugin.json       # Plugin manifest
-│   ├── commands/
-│   │   └── welcome.md
-│   └── skills/
-│       └── greet-info/
-│           └── SKILL.md
-```
-
-#### marketplace.json Format:
+**Main package.json** (`package.json` at repo root):
 ```json
 {
-  "name": "team-tools",
-  "plugins": [
-    {
-      "name": "greetings",
-      "source": { "source": "local", "path": "./greetings" },
-      "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" },
-      "category": "Productivity"
-    }
-  ]
-}
-```
-
-#### plugin.json Manifest Schema:
-```json
-{
-  "name": "plugin-name",
-  "displayName": "Plugin Name",
-  "version": "1.2.0",
-  "description": "Brief plugin description",
-  "author": { "name": "Author", "email": "author@example.com" },
-  "skills": "./custom/skills/",
-  "commands": ["./commands/*.md"],
-  "agents": ["./agents/reviewer.md"],
-  "hooks": "./config/hooks.json",
-  "mcpServers": "./.mcp.json",
-  "lspServers": "./.lsp.json",
-  "userConfig": {
-    "api_endpoint": { "type": "string", "title": "API", "sensitive": true }
+  "name": "context-mode",
+  "version": "1.0.146",
+  "exports": {
+    ".": "./build/adapters/opencode/plugin.js",
+    "./plugin": "./build/adapters/opencode/plugin.js",
+    "./openclaw": "./build/adapters/openclaw/plugin.js",
+    "./cli": "./cli.bundle.mjs"
   },
-  "dependencies": [{ "name": "helper-lib", "version": "~2.1.0" }]
-}
-```
-
-#### Component Directories:
-```
-plugin/
-├── .claude-plugin/plugin.json
-├── skills/
-│   └── my-skill/SKILL.md
-├── commands/
-│   └── command.md
-├── agents/
-│   └── agent-name.md
-├── hooks/
-│   └── hooks.json
-├── .mcp.json
-└── .lsp.json
-```
-
-#### Installation Scopes:
-| Scope | Settings File | Use Case |
-|-------|--------------|----------|
-| `user` | `~/.claude/settings.json` | Personal (default) |
-| `project` | `.claude/settings.json` | Team/shared via VCS |
-| `local` | `.claude/settings.local.json` | Project-specific, gitignored |
-| `managed` | Managed settings | Read-only, update-only |
-
-#### Skill Format (SKILL.md):
-```markdown
----
-name: skill-name
-description: What this skill does
----
-
-Detailed skill instructions here. Can include code examples, context, etc.
-```
-
-#### Agent Format:
-```markdown
----
-name: reviewer
-description: Code reviewer agent for PRs
-model: sonnet
-effort: medium
-maxTurns: 20
----
-
-System prompt for the agent's role and behavior.
-```
-
-[Source: Claude Code Plugins Reference](https://code.claude.com/docs/en/plugins-reference)
-
----
-
-### 3. Codex Plugin System
-
-**Configuration Files:**
-- `.codex-plugin/plugin.json` — Plugin manifest (required)
-- `.agents/plugins/marketplace.json` — Marketplace catalog
-- `~/.codex/config.toml` — User config
-- `.codex/config.toml` — Project config
-
-#### Marketplace Structure:
-```
-.agents/plugins/
-└── marketplace.json
-plugins/
-└── my-plugin/
-    ├── .codex-plugin/
-    │   └── plugin.json
-    ├── skills/
-    │   └── hello/SKILL.md
-    ├── hooks/
-    │   └── hooks.json
-    ├── .app.json
-    └── .mcp.json
-```
-
-#### marketplace.json Format:
-```json
-{
-  "name": "local-repo",
-  "interface": { "displayName": "Local Example Plugins" },
-  "plugins": [
-    {
-      "name": "my-plugin",
-      "source": { "source": "local", "path": "./plugins/my-plugin" },
-      "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" },
-      "category": "Productivity"
-    }
-  ]
-}
-```
-
-#### plugin.json Manifest:
-```json
-{
-  "name": "my-plugin",
-  "version": "0.1.0",
-  "description": "Bundle reusable skills",
-  "author": { "name": "Team", "url": "https://example.com" },
-  "skills": "./skills/",
-  "mcpServers": "./.mcp.json",
-  "apps": "./.app.json",
-  "hooks": "./hooks/hooks.json",
-  "interface": {
-    "displayName": "My Plugin",
-    "shortDescription": "Reusable skills",
-    "category": "Productivity",
-    "defaultPrompt": ["Use My Plugin to summarize notes."]
+  "bin": {
+    "context-mode": "./cli.bundle.mjs"
+  },
+  "pi": {
+    "extensions": ["./build/adapters/pi/extension.js"],
+    "skills": ["./skills"]
   }
 }
 ```
 
-#### Skills Format (SKILL.md):
-```markdown
----
-name: hello
-description: Greet the user with a friendly message.
----
-
-Greet the user warmly and ask how you can help.
-```
-
-#### hooks.json Format:
+**Pi extension stub** (`.pi/extensions/context-mode/package.json`):
 ```json
 {
-  "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 ${PLUGIN_ROOT}/hooks/session_start.py"
-          }
-        ]
-      }
-    ]
+  "name": "context-mode",
+  "version": "1.0.146",
+  "description": "Context-mode extension for Pi coding agent — session continuity and context window protection",
+  "main": "index.ts",
+  "dependencies": {
+    "better-sqlite3": "^11.0.0"
   }
 }
 ```
 
-#### MCP Server Config (.mcp.json):
+**Pi extension index.ts** (`.pi/extensions/context-mode/index.ts`):
+```typescript
+export { default } from "../../../build/adapters/pi/extension.js";
+```
+
+[Source](https://raw.githubusercontent.com/mksglu/context-mode/main/.pi/extensions/context-mode/index.ts)
+
+[Source](https://raw.githubusercontent.com/mksglu/context-mode/main/.pi/extensions/context-mode/package.json)
+
+### 2. Exports Field Usage
+
+The `exports` field in package.json defines entry points for different use cases:
+- `.` (default): OpenCode plugin
+- `./plugin`: OpenCode plugin
+- `./openclaw`: OpenClaw plugin
+- `./cli`: CLI bundle for `bin` field
+
+This allows the same package to be used in multiple contexts, with the default pointing to the most common use case (OpenCode). [Source](https://registry.npmjs.org/context-mode)
+
+### 3. Bin Field for CLI
+
+The `bin` field maps the command name `context-mode` to `cli.bundle.mjs`:
 ```json
-{
-  "docs": {
-    "command": "docs-mcp",
-    "args": ["--stdio"]
-  }
+"bin": {
+  "context-mode": "./cli.bundle.mjs"
 }
 ```
 
-#### Installation Methods:
-1. **CLI:** `codex plugin marketplace add owner/repo`
-2. **Local:** Add to `~/.agents/plugins/marketplace.json` or `.agents/plugins/marketplace.json`
-3. **Git-backed:** `"source": "git-subdir"` with `url` and `path`
+When installed globally with `npm install -g context-mode`, this creates a symlink so `context-mode` command is available in PATH. [Source](https://www.typeerror.org/docs/npm/cli/v8/commands/npm-exec)
 
-#### Environment Variables:
-- `${PLUGIN_ROOT}` / `${CLAUDE_PLUGIN_ROOT}` — Plugin directory
-- `${PLUGIN_DATA}` / `${CLAUDE_PLUGIN_DATA}` — Persistent data directory
-- `${CLAUDE_PROJECT_DIR}` — Project root
+### 4. Pi Field Structure
 
-[Source: Codex Plugin Build Guide](https://developers.openai.com/codex/plugins/build)
+The `pi` field in package.json declares pi-specific resources:
+```json
+"pi": {
+  "extensions": ["./build/adapters/pi/extension.js"],
+  "skills": ["./skills"]
+}
+```
 
----
+When pi installs the package via `pi install npm:context-mode`, it reads this field to know where to find extensions and skills. [Source](https://pi.dev/docs/latest/packages)
+
+### 5. Build Process
+
+**Build pipeline** (from package.json scripts):
+1. `tsc` - Compile TypeScript to JavaScript
+2. `chmod +x build/cli.js` (Unix only)
+3. `npm run bundle` - esbuild bundling for multiple entry points:
+   - `server.bundle.mjs` - MCP server
+   - `cli.bundle.mjs` - CLI tool
+   - `hooks/session-extract.bundle.mjs` - Session extraction hook
+   - `hooks/session-snapshot.bundle.mjs` - Session snapshot hook
+   - `hooks/session-db.bundle.mjs` - Session database hook
+   - `hooks/security.bundle.mjs` - Security hook
+4. `npm run assert-bundle` - Verify all bundles exist
+5. `npm run assert-asymmetric-drift` - Check for version drift
+
+[Source](https://raw.githubusercontent.com/mksglu/context-mode/main/package.json)
+
+**TypeScript compilation** outputs to `build/` directory, including `build/adapters/pi/extension.js` which is referenced by both the main `package.json` (in `pi.extensions`) and the stub extension.
+
+### 6. Version Sync Mechanism
+
+The `version` script in package.json runs `scripts/version-sync.mjs` which updates all manifest files:
+```javascript
+const targets = [
+  ".claude-plugin/plugin.json",
+  ".claude-plugin/marketplace.json",
+  ".cursor-plugin/plugin.json",
+  ".codex-plugin/plugin.json",
+  ".openclaw-plugin/openclaw.plugin.json",
+  ".openclaw-plugin/package.json",
+  "openclaw.plugin.json",
+  ".pi/extensions/context-mode/package.json",  // <-- Pi extension synced here
+];
+```
+
+This ensures the stub extension's package.json always has the same version as the main package.
+
+[Source](https://raw.githubusercontent.com/mksglu/context-mode/main/scripts/version-sync.mjs)
+
+### 7. Installation Flow
+
+**npm install -g context-mode:**
+1. Downloads context-mode package from npm
+2. Runs `postinstall` script
+3. Creates `context-mode` command in PATH (from `bin` field)
+4. Installs dependencies (better-sqlite3, etc.)
+5. Builds TypeScript if not pre-built
+
+**pi install npm:context-mode:**
+1. Pi reads package from npm
+2. Pi looks for `pi` field in package.json
+3. Pi reads `pi.extensions` to find extension entry point
+4. Pi reads `pi.skills` to find skill files
+5. Pi loads the extension (which is the compiled JS from `build/adapters/pi/extension.js`)
+
+[Source](https://context-mode.pages.dev/)
+
+### 8. Adapter Pattern
+
+context-mode uses an adapter architecture with platform-specific implementations in `src/adapters/`:
+- `pi/` - Pi coding agent (read/write/edit/bash tools)
+- `openclaw/` - OpenClaw gateway
+- `opencode/` - OpenCode
+- `claude-code/` - Claude Code
+- `codex/` - Codex CLI
+- `cursor/` - Cursor
+- `gemini-cli/` - Gemini CLI
+- etc.
+
+Each adapter extends `BaseAdapter` and implements `HookAdapter` interface. The Pi adapter is special because it uses "mcp-only" paradigm - hooks are wired via JavaScript callbacks, not JSON-stdio.
+
+[Source](https://github.com/mksglu/context-mode/tree/main/src/adapters)
+
+## Installation Flow Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                        npm install -g context-mode                  │
+└─────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                     ~/.npm or global node_modules                    │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │  context-mode@1.0.146                                        │  │
+│  │  ├── package.json (main)                                     │  │
+│  │  ├── bin/                                                    │  │
+│  │  │   └── context-mode → cli.bundle.mjs                      │  │
+│  │  ├── build/                                                  │  │
+│  │  │   └── adapters/pi/extension.js  ← referenced by pi field │  │
+│  │  ├── skills/                                                 │  │
+│  │  └── ...                                                     │  │
+│  └──────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                     pi install npm:context-mode                     │
+└─────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                     ~/.pi/extensions/context-mode/                   │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │  package.json (stub, version-synced from main)               │  │
+│  │  index.ts → ../../../build/adapters/pi/extension.js          │  │
+│  │  tsconfig.json                                               │  │
+│  └──────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                           Pi Runtime                                │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │  Reads .pi/extensions/context-mode/package.json              │  │
+│  │  Finds version: 1.0.146                                     │  │
+│  │  Loads index.ts → build/adapters/pi/extension.js            │  │
+│  │  Registers Pi extension                                      │  │
+│  └──────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+## Key Implementation Details
+
+### Why Dual Install?
+
+1. **CLI availability**: The `bin` field only works when installed via npm, making `context-mode` command available globally
+2. **Pi extension isolation**: Pi expects extensions in a specific location (`.pi/extensions/`) with their own package.json
+3. **Independent lifecycle**: npm package and pi extension can theoretically have different update cycles
+4. **Build separation**: The stub is minimal and re-exports from the main build, avoiding duplication
+
+### Dependency Management
+
+**Main package dependencies:**
+- `better-sqlite3`: Core database
+- `@modelcontextprotocol/sdk`: MCP server implementation
+- `turndown`: HTML to Markdown
+- `zod`: Validation
+
+**Pi extension stub dependencies:**
+- `better-sqlite3`: The stub has its own better-sqlite3 dependency that gets installed separately
+
+This means `better-sqlite3` is installed twice (once for npm global, once for the stub extension).
+
+## Potential Issues for Our Implementation
+
+### 1. Version Drift
+
+**Problem**: If version-sync script fails, the stub extension could have a different version than the main package.
+
+**Mitigation**: The version-sync runs automatically via npm lifecycle hook on `npm version`. However, if someone manually publishes or if the sync script errors, versions could diverge.
+
+### 2. peerDependencies vs dependencies
+
+**Problem**: According to pi docs, third-party runtime dependencies should be in `dependencies`, but pi core packages should be in `peerDependencies` with `"*"` range.
+
+**Current pattern**: context-mode uses `dependencies` for all packages. The stub extension has its own `dependencies` for `better-sqlite3`.
+
+**Our consideration**: If we use the same pattern, we need to decide:
+- Should our main package use `peerDependencies` for pi core packages?
+- Should the stub extension have its own dependencies or inherit from main?
+
+### 3. Build Complexity
+
+**Problem**: The build process has multiple steps (tsc → bundle → assert-bundle → assert-asymmetric-drift).
+
+**Our consideration**: This adds complexity. We need to:
+- Ensure the build produces both the CLI bundle and the extension.js
+- Handle the TypeScript compilation correctly
+- Ensure the stub can re-export from the build output
+
+### 4. File Structure
+
+**Problem**: The stub extension needs to know the relative path to the main package's build output.
+
+**Current pattern**: `../../../build/adapters/pi/extension.js` from the stub location.
+
+**Our consideration**: This creates a hard-coded path dependency. If the package structure changes, the stub breaks.
+
+### 5. Native Module Rebuild
+
+**Problem**: `better-sqlite3` requires native compilation. The postinstall script handles healing, but this can cause issues on some platforms.
+
+**Our consideration**: If our implementation uses native modules, we need a similar postinstall strategy.
+
+## Comparison: Single Package vs Dual-Install
+
+| Aspect | Single Package | Dual-Install (context-mode) |
+|--------|---------------|---------------------------|
+| Simplicity | Simpler, one install | More complex, two install points |
+| CLI availability | Can use bin field | Has bin field in main package |
+| Pi integration | Can use pi field | Separate stub package |
+| Version sync | N/A | Requires version-sync script |
+| Dependency isolation | Shared | Separate stub dependencies |
+| Build output | One location | Must be accessible from stub |
+
+## Recommendation for pi-product-workflow
+
+Based on this research, the dual-install pattern is well-proven by context-mode. For pi-product-workflow:
+
+1. **Follow the same pattern**: Main npm package with `pi` field, plus a stub extension in `.pi/extensions/`
+2. **Use version-sync**: Ensure the stub's package.json version matches the main package
+3. **Keep build accessible**: Place build output in a location accessible from the stub's relative path
+4. **Handle native modules carefully**: Include postinstall script for native module rebuilding
+5. **Consider peerDependencies**: For pi core packages, use `peerDependencies` with `"*"` range as recommended by pi docs
 
 ## Sources
 
-### Kept
-- [OpenCode Plugins Documentation](https://github.com/anomalyco/opencode/blob/9ad6588f/packages/web/src/content/docs/plugins.mdx) — Complete plugin API, hooks, load order, npm integration
-- [Claude Code Plugins Reference](https://code.claude.com/docs/en/plugins-reference) — Full manifest schema, component specs, installation scopes
-- [Codex Plugin Build Guide](https://developers.openai.com/codex/plugins/build) — Plugin structure, marketplace format, manifest fields
-- [OpenCode Config Docs](https://dev.opencode.ai/docs/config/) — opencode.json schema reference
-- [Claude Code Discover Plugins](https://code.claude.com/docs/en/discover-plugins.md) — Installation commands, marketplace management
+### Kept:
+- context-mode package.json: Full structure showing exports, bin, and pi fields
+- context-mode Pi adapter source: Shows how the extension works
+- Pi Packages documentation: Explains how pi field works and installation process
+- version-sync.mjs script: Shows how version sync is implemented
+- README.md: Installation instructions for all platforms
 
-### Dropped
-- SST/OpenCode ecosystem docs — Partial overlap with main repo
-- Third-party plugin guides — Less authoritative than official docs
-
----
+### Dropped:
+- Generic "npm install" tutorials: Too basic, not specific to the pattern
+- Raspberry Pi Node.js guides: Not relevant to the topic
 
 ## Gaps
 
-- **OpenCode:** Plugin publishing/distribution mechanism unclear (npm-only currently)
-- **Claude Code:** Official marketplace submission process not fully documented
-- **Codex:** Plugin hooks still experimental in current release (`plugin_hooks = true` required)
+- **How exactly pi installs the stub extension**: The pi docs explain the `pi` field but not the exact mechanism of how the stub in `.pi/extensions/` gets created. Need to check if `pi install` copies files or symlinks.
+- **Postinstall script details**: The postinstall script is mentioned but not fully analyzed for native module handling.
+- **CI/CD for dual-install**: How context-mode publishes both packages (main npm package and the repo with stub) needs investigation.
 
 ## Suggested Next Steps
 
-1. Compare plugin hook event catalogs across all three tools
-2. Research cross-CLI plugin compatibility layers
-3. Document skill/command format variations between tools
-
----
-
-## Supervisor Coordination
-
-If you need me to:
-- Fetch additional detail on any specific config format
-- Compare specific hook/event systems
-- Research plugin ecosystem availability for any tool
-
-Use `contact_supervisor` with `reason: "need_decision"` for scope clarification.
+1. Test the dual-install pattern with a minimal example
+2. Investigate pi's actual installation mechanism for extensions
+3. Document the build process for our specific needs
+4. Create a version-sync script for our manifests

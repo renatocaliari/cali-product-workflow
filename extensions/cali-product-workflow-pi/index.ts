@@ -10,4 +10,4 @@
  * - pi install npm:cali-product-workflow-pi → Extension loaded from this stub
  */
 
-export { default } from "../cali-product-workflow/index.js";
+export { default } from "../cali-product-workflow/index.ts";
