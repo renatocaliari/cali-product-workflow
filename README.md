@@ -168,7 +168,7 @@ pi -e npm:@renatocaliari/pi-product-workflow
                         │
                         ▼
  ┌─────────────────────────────────────────────────────────────┐
- │  3. Shape (Shape Up)                                                │
+ │  3. Proposal (Shape Up)                                                │
  │     Define: problem → solution → scope → rabbit holes       │
  └──────────────────────┬──────────────────────────────────────┘
                         │
