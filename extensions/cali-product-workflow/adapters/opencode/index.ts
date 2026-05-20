@@ -151,10 +151,7 @@ export class OpenCodeAdapter extends BaseAdapter {
     if (input && typeof input === "object" && "path" in input) {
       const inp = input as { path?: string };
       if (inp.path?.includes(TRACKING_FILE)) {
-        const wf = getActiveWorkflow(wd);
-        if (wf) {
-          this._eventDispatcher?.dispatchToolCall(tool, input, this._cwd);
-        }
+        // Workflow tracking handled by the unconditional dispatch below
       }
     }
     
