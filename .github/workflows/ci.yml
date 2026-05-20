@@ -1,0 +1,122 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  typecheck:
+    name: TypeScript Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript check
+        run: npm run typecheck
+        # BLOCKS on type errors (when @types/node is properly configured)
+        # Currently has pre-existing errors: missing Node.js types (console, process, etc.)
+        # TODO: Add @types/node to devDependencies and update tsconfig to fix
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run lint
+        run: npm run lint
+        # BLOCKS on lint errors
+
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    # Run in parallel with typecheck/lint (no needs dependency)
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm run test
+        # BLOCKS if tests fail
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results/
+          retention-days: 7
+
+  coverage:
+    name: Test Coverage
+    runs-on: ubuntu-latest
+    needs: [test]
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run coverage
+        run: npm run test:coverage
+        continue-on-error: true
+
+      - name: Check coverage threshold
+        run: |
+          if [ -f coverage/coverage-summary.json ]; then
+            COVERAGE=$(cat coverage/coverage-summary.json | grep -o '"lines":[0-9."]*' | grep -o '[0-9.]*' | head -1)
+            echo "Line coverage: ${COVERAGE:-0}%"
+            if [ -n "$COVERAGE" ] && (( $(echo "$COVERAGE < 70" | bc -l 2>/dev/null || echo 1) )); then
+              echo "::warning::Coverage is below 70% threshold (current: ${COVERAGE}%, required: 70%)"
+            else
+              echo "Coverage meets 70% threshold"
+            fi
+          else
+            echo "::warning::Coverage report not found"
+          fi

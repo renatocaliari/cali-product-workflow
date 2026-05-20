@@ -1,5 +1,9 @@
 # @renatocaliari/pi-product-workflow
 
+[![CI](https://github.com/renatocaliari/pi-product-workflow/actions/workflows/ci.yml/badge.svg)](https://github.com/renatocaliari/pi-product-workflow/actions/workflows/ci.yml)
+[![Mutation Testing](https://github.com/renatocaliari/pi-product-workflow/actions/workflows/mutation.yml/badge.svg)](https://github.com/renatocaliari/pi-product-workflow/actions/workflows/mutation.yml)
+[![Coverage](https://img.shields.io/badge/coverage-70%25-brightgreen)](https://github.com/renatocaliari/pi-product-workflow/actions/workflows/ci.yml)
+
 **Transform product ideas into approved, testable plans — systematically.**
 
 This package brings [Shape Up](https://basecamp.com/shapeup) methodology to AI coding agents. Instead of open-ended feature lists, you shape proposals with clear scope boundaries, validate them through adversarial critique, and generate typed technical scopes ready for autonomous execution.

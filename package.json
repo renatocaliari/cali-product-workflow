@@ -71,6 +71,7 @@
     "skills/",
     "extensions/",
     "scripts/",
+    "tests/",
     "cali-product-workflow.schema.json",
     "README.md",
     "LICENSE",
@@ -86,10 +87,14 @@
     "test:coverage": "vitest run --coverage",
     "test:ci": "./scripts/test-ci.sh",
     "typecheck": "tsc --noEmit",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "mutate": "stryker run",
+    "test:mutation": "stryker run"
   },
   "devDependencies": {
     "@marcfargas/pi-test-harness": "^0.5.0",
+    "@stryker-mutator/core": "^9.6.1",
+    "@stryker-mutator/vitest-runner": "^9.6.1",
     "@vitest/coverage-v8": "^4.1.6",
     "typescript": "^6.0.3",
     "vitest": "^4.1.6"
