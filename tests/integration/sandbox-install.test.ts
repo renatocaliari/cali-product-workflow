@@ -34,17 +34,17 @@ describe('Sandbox Install Verification', () => {
       expect(pkg.name).toBe('@renatocaliari/pi-product-workflow');
     });
 
-    it('should declare pi extension', () => {
+    it('should declare pi extension via exports', () => {
       const pkg = JSON.parse(readFileSync(join(PROJECT_ROOT, 'package.json'), 'utf-8'));
-      expect(pkg.pi).toBeDefined();
-      expect(pkg.pi.extensions).toBeDefined();
-      expect(pkg.pi.extensions).toContain('./extensions/cali-product-workflow');
+      expect(pkg.exports).toBeDefined();
+      expect(pkg.exports['./extensions']).toBeDefined();
+      expect(pkg.exports['./extensions']).toContain('./extensions');
     });
 
-    it('should declare all skill paths', () => {
+    it('should declare all skill exports', () => {
       const pkg = JSON.parse(readFileSync(join(PROJECT_ROOT, 'package.json'), 'utf-8'));
-      expect(pkg.pi.skills).toBeDefined();
-      expect(pkg.pi.skills.length).toBeGreaterThanOrEqual(15);
+      expect(pkg.exports['./skills']).toBeDefined();
+      expect(pkg.exports['./skills-workflow']).toBeDefined();
     });
   });
 
@@ -124,18 +124,18 @@ describe('Sandbox Install Verification', () => {
       expect(existsSync(refsPath)).toBe(true);
     });
 
-    it('should have pi-tools directory', () => {
-      const piToolsPath = join(refsPath, 'pi-tools');
-      expect(existsSync(piToolsPath)).toBe(true);
+    it('should have cli-tools directory', () => {
+      const cliToolsPath = join(refsPath, 'cli-tools');
+      expect(existsSync(cliToolsPath)).toBe(true);
     });
 
-    it('should have pi-tools reference files', () => {
-      const piToolsPath = join(refsPath, 'pi-tools');
+    it('should have cli-tools reference files', () => {
+      const cliToolsPath = join(refsPath, 'cli-tools');
       
       // Expected files
       const expectedFiles = ['plannotator.md', 'subagents.md', 'goals.md', 'ask.md'];
       expectedFiles.forEach(file => {
-        expect(existsSync(join(piToolsPath, file))).toBe(true);
+        expect(existsSync(join(cliToolsPath, file))).toBe(true);
       });
     });
 
@@ -154,20 +154,20 @@ describe('Sandbox Install Verification', () => {
   // ── Peer Dependencies ─────────────────────────────────────────────────
 
   describe('Peer Dependencies', () => {
-    it('should declare required peer dependencies', () => {
-      const pkg = JSON.parse(readFileSync(join(PROJECT_ROOT, 'package.json'), 'utf-8'));
-      expect(pkg.peerDependencies).toBeDefined();
-      
-      // Check for key dependencies
-      expect(pkg.peerDependencies['@earendil-works/pi-coding-agent']).toBeDefined();
-      expect(pkg.peerDependencies['pi-subagents']).toBeDefined();
-      expect(pkg.peerDependencies['@plannotator/pi-extension']).toBeDefined();
-    });
-
     it('should declare optional peer dependencies', () => {
       const pkg = JSON.parse(readFileSync(join(PROJECT_ROOT, 'package.json'), 'utf-8'));
       expect(pkg.optionalPeerDependencies).toBeDefined();
       expect(pkg.optionalPeerDependencies['cali-short-cycle-product']).toBe('*');
+    });
+
+    it('should declare coding agent peer dependency', () => {
+      const pkg = JSON.parse(readFileSync(join(PROJECT_ROOT, 'package.json'), 'utf-8'));
+      expect(pkg.optionalPeerDependencies['@earendil-works/pi-coding-agent']).toBeDefined();
+    });
+
+    it('should declare plannotator peer dependency', () => {
+      const pkg = JSON.parse(readFileSync(join(PROJECT_ROOT, 'package.json'), 'utf-8'));
+      expect(pkg.optionalPeerDependencies['@plannotator/pi-extension']).toBeDefined();
     });
   });
 

@@ -18,7 +18,7 @@ import {
   validateAgainstDataset,
   getValidationSummary,
   extractPhases,
-  hasPiToolsReference,
+  hasCliToolsReference,
   countGates,
 } from './validator';
 
@@ -132,8 +132,8 @@ describe('Phase Extraction', () => {
 // ── Tool Reference Validation ─────────────────────────────────────────────────
 
 describe('Tool References', () => {
-  it('should reference pi-tools directory', () => {
-    expect(hasPiToolsReference(SKILL_CONTENT)).toBe(true);
+  it('should reference cli-tools directory', () => {
+    expect(hasCliToolsReference(SKILL_CONTENT)).toBe(true);
   });
 
   it('should reference subagent tool', () => {
@@ -289,8 +289,8 @@ describe('Pattern Consistency', () => {
     expect(toolMentions?.length || 0).toBeGreaterThan(0);
   });
 
-  it('should reference tools via pi-tools', () => {
-    expect(SKILL_CONTENT).toMatch(/references\/pi-tools/);
+  it('should reference tools via cli-tools', () => {
+    expect(SKILL_CONTENT).toMatch(/references\/cli-tools/);
   });
 
   it('should have consistent section headers', () => {

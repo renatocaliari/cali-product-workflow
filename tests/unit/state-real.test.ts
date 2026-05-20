@@ -271,7 +271,7 @@ describe('REAL State Functions', () => {
 
       const result = renameWorkflow(tempDir, 'test', 'x');
       expect(result.ok).toBe(false);
-      expect(result.error).toContain('at least 2 characters');
+      expect((result as { ok: false; error: string }).error).toContain('at least 2 characters');
     });
   });
 

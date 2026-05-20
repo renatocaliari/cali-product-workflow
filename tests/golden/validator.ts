@@ -5,7 +5,7 @@
  * This module provides functions to validate content against expected patterns.
  */
 
-import type { GoldenCase, ValidationResult, ValidationError, ValidateOptions } from './types';
+import type { GoldenCase, ValidationResult, ValidationError, ValidationWarning, ValidateOptions } from './types';
 
 // ── Pattern Library ────────────────────────────────────────────────────────────
 
@@ -23,7 +23,7 @@ export const PATTERNS = {
   
   // Tool patterns
   toolReference: /(subagent|ask_user_question|plannotator|supervise|intercom)/gi,
-  piToolsReference: /references\/pi-tools\//,
+  cliToolsReference: /references\/cli-tools\//,
   
   // Artifact patterns
   specProduct: /spec-product/,
@@ -337,10 +337,10 @@ export function extractPhases(content: string): Array<{ index: number; name: str
 }
 
 /**
- * Check if content references pi-tools directory
+ * Check if content references cli-tools directory
  */
-export function hasPiToolsReference(content: string): boolean {
-  return PATTERNS.piToolsReference.test(content);
+export function hasCliToolsReference(content: string): boolean {
+  return PATTERNS.cliToolsReference.test(content);
 }
 
 /**

@@ -91,13 +91,13 @@ describe('Skill Implementation Validation', () => {
       // ── Tool References ────────────────────────────────────
 
       describe('Tool References', () => {
-        it('should reference pi-tools directory', () => {
-          expect(content).toMatch(/references\/pi-tools/);
+        it('should reference cli-tools directory', () => {
+          expect(content).toMatch(/references\/cli-tools/);
         });
 
         it('should have tools header (if using subagent)', () => {
           if (content.includes('subagent')) {
-            expect(content).toMatch(/Tools|references\/pi-tools\//i);
+            expect(content).toMatch(/Tools|references\/cli-tools\//i);
           }
         });
       });
@@ -208,9 +208,9 @@ describe('Skill Implementation Validation', () => {
       expect(content).toMatch(/plannotator/i);
     });
 
-    it('gate.md should reference pi-tools/plannotator.md', () => {
+    it('gate.md should reference cli-tools/plannotator.md', () => {
       const content = readFileSync(gatePath, 'utf8');
-      expect(content).toMatch(/plannotator\.md|--gate/);
+      expect(content).toMatch(/plannotator\.md|--gate|references\/cli-tools/);
     });
   });
 

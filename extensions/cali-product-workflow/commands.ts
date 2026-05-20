@@ -2,7 +2,7 @@ import { rmSync } from "node:fs";
 import { join } from "node:path";
 import { homedir } from "node:os";
 import type { ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
-import { Container, Text, Spacer, SelectList } from "@earendil-works/pi-tui";
+import { Container, Text, Spacer, SelectList, type SelectItem } from "@earendil-works/pi-tui";
 import { WORKFLOW_DIR, PHASE_NAMES } from "./types";
 import {
   readTracking, writeTracking, readGlobalTracking, writeGlobalTracking,
@@ -27,7 +27,7 @@ interface CmdHandler {
 // This helper parses key=value pairs (quoted values supported) and also
 // exposes positional tokens via "_" (array).
 function parseArgs(raw: string): Record<string, string> & { _: string[] } {
-  const result: Record<string, string> & { _: string[] } = { _: [] };
+  const result = { _: [] as string[] } as Record<string, string> & { _: string[] };
 
   const trimmed = raw?.trim() ?? "";
   if (!trimmed) return result;
@@ -188,7 +188,7 @@ function showStopPicker(
         scrollInfo: (t: string) => theme.fg("dim", t),
         noMatch: (t: string) => theme.fg("warning", t),
       });
-      sl.onSelect = (v: string) => done(v);
+      sl.onSelect = (item: SelectItem) => done(item.value);
       sl.onCancel = () => done(null);
       c.addChild(sl);
       c.addChild(new Spacer(1));
@@ -603,13 +603,13 @@ function cmdComplete(_pi: ExtensionAPI, _args: string, ctx: CmdCtx) {
     writeGlobalTracking(gt);
   }
 
-  ctx.ui?.notify(`🎉 ${wf.name} completed!`, "success");
+  ctx.ui?.notify(`🎉 ${wf.name} completed!`, "info");
 }
 
 // ── GOTO ─────────────────────────────────────────────────────────────
 
 function cmdGoto(_pi: ExtensionAPI, args: string, _ctx: CmdCtx) {
-  const wd = resolveProjectDir(ctx.cwd);
+  const wd = resolveProjectDir(_ctx.cwd);
   const parsed = parseArgs(args);
   const name = parsed.name || parsed._[0];
   const gt = readGlobalTracking();
@@ -651,7 +651,7 @@ function cmdRename(_pi: ExtensionAPI, args: string, ctx: CmdCtx) {
   if (!result.ok) { replyWarn(ctx, `❌ ${result.error}`); return; }
 
   updateFooter(ctx, wd);
-  ctx.ui?.notify(`✨ Renamed to "${toSafeName(newName)}"`, "success");
+  ctx.ui?.notify(`✨ Renamed to "${toSafeName(newName)}"`, "info");
 }
 
 // ── MENU ─────────────────────────────────────────────────────────────

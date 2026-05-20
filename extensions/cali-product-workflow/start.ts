@@ -14,7 +14,7 @@ import { updateFooter, showOrphanOverlay } from "./ui";
 
 // Quick key=value parser for the args string
 function parseArgs(raw: string): Record<string, string> & { _: string[] } {
-  const result: Record<string, string> & { _: string[] } = { _: [] };
+  const result = { _: [] as string[] } as Record<string, string> & { _: string[] };
   const trimmed = raw?.trim() ?? "";
   if (!trimmed) return result;
 
@@ -51,7 +51,8 @@ export default async function cmdStart(
 ): Promise<void> {
   const wd = resolveProjectDir(ctx.cwd);
   const parsed = parseArgs(rawArgs);
-  const sessionId = ctx.sessionId || "default";
+  // Cast to any since sessionId is provided at runtime but not in types
+  const sessionId = (ctx as { sessionId?: string }).sessionId || "default";
   const storeParsed = parsedInputStore.get(sessionId) || { sources: [], draftText: "" };
 
   // Merge: explicit key=value args take priority over parsed input.

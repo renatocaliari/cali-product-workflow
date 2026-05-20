@@ -638,12 +638,12 @@ export function getDefaultBranch(cwd: string): string {
  * Generate a worktree directory name from a workflow name and date.
  */
 export function worktreeDirName(name: string, date?: string): string {
-  return `pw-${name}-${ds}`;
+  return `pw-${name}-${date}`;
 }
 
 /**
  * Generate a branch name for a workflow worktree.
  */
 export function worktreeBranchName(name: string, date?: string): string {
-  return `pw/${name}/${ds}`;
+  return `pw/${name}/${date}`;
 }

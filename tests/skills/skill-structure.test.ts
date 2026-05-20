@@ -89,8 +89,8 @@ describe('SKILL.md Structure Validation', () => {
       expect(content).toMatch(/Tools.*Packages|🔧 Tools/i);
     });
 
-    it('should reference pi-tools/ directory', () => {
-      expect(content).toMatch(/references\/pi-tools/);
+    it('should reference cli-tools/ directory', () => {
+      expect(content).toMatch(/references\/cli-tools/);
     });
 
     it('subagent should reference subagents.md', () => {
@@ -202,13 +202,13 @@ describe('Phase Files Structure', () => {
   });
 });
 
-// ── pi-tools References Tests ────────────────────────────────────────
+// ── cli-tools References Tests ────────────────────────────────────────
 
-describe('pi-tools References', () => {
-  const piToolsDir = join(PROJECT_ROOT, 'skills/cali-product-workflow/references/pi-tools');
+describe('cli-tools References', () => {
+  const cliToolsDir = join(PROJECT_ROOT, 'skills/cali-product-workflow/references/cli-tools');
 
-  it('pi-tools directory should exist', () => {
-    expect(existsSync(piToolsDir)).toBe(true);
+  it('cli-tools directory should exist', () => {
+    expect(existsSync(cliToolsDir)).toBe(true);
   });
 
   it('plannotator.md should exist if referenced', () => {
@@ -217,7 +217,7 @@ describe('pi-tools References', () => {
       'utf8'
     );
     if (skillContent.includes('plannotator.md')) {
-      expect(existsSync(join(piToolsDir, 'plannotator.md'))).toBe(true);
+      expect(existsSync(join(cliToolsDir, 'plannotator.md'))).toBe(true);
     }
   });
 
@@ -227,7 +227,7 @@ describe('pi-tools References', () => {
       'utf8'
     );
     if (skillContent.includes('subagents.md')) {
-      expect(existsSync(join(piToolsDir, 'subagents.md'))).toBe(true);
+      expect(existsSync(join(cliToolsDir, 'subagents.md'))).toBe(true);
     }
   });
 
@@ -237,7 +237,7 @@ describe('pi-tools References', () => {
       'utf8'
     );
     if (skillContent.includes('goals.md')) {
-      expect(existsSync(join(piToolsDir, 'goals.md'))).toBe(true);
+      expect(existsSync(join(cliToolsDir, 'goals.md'))).toBe(true);
     }
   });
 });
