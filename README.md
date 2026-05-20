@@ -10,71 +10,73 @@ This package brings Shape Up's betting table methodology to AI coding agents. In
 
 **The Problem:** Building products with AI agents often leads to:
 
-- Scope creep and unclear boundaries
-- Plans without adversarial review
-- Technical work before business validation
-- No systematic testing for AI-generated code
-- Generic workflows that miss product-specific insights
+- Scope creep and unclear boundaries — defining *what not to build* is harder than *what to build*
+- Plans without adversarial review — no one questions assumptions before coding begins
+- Technical work before business validation — shipping features that shouldn't exist
+- No systematic testing for AI-generated code — AI writes fast, but also writes wrong
+- Generic workflows missing product-specific insights — pricing, trust, ads, and launch strategy are product decisions, not code decisions
 
-**The Solution:** A structured workflow that:
+**The Solution:** A structured workflow that makes AI think like a product manager:
 
-- ✅ Shapes proposals BEFORE coding (not during)
-- ✅ Reviews every plan through adversarial critique
-- ✅ Auto-detects domain signals and suggests relevant playbooks
-- ✅ Generates typed scopes for autonomous execution
-- ✅ Implements AI-aware mutation testing for software products
+- ✅ **Measure thrice, cut once** — shapes proposals with IN/OUT boundaries BEFORE coding
+- ✅ **Adversarial critique** — reviews every plan for gaps, risks, and assumptions
+- ✅ **Visual review gate** — Plannotator opens the full plan for point-by-point comments (not just chat)
+- ✅ **Interface exploration in ASCII** — visualize tradeoffs and fluxos in seconds, no wasted development time
+- ✅ **LLM hybrid recommendation** — from multiple interface approaches, picks the best of each
+- ✅ **Domain libraries** — auto-detects 8 product domains (Pricing, Trust, Ads, etc.) from your language
+- ✅ **AI-aware mutation testing** — for software products, with coverage targets and CI gates
+- ✅ **Greenfield & Brownfield** — works for new products and existing product evolution
 
 **Key Features:**
-- 16 specialized product skills (JTBD, Opportunity Mapping, Product Discovery, pricing strategies, and more)
-- Real-time TUI tracking for workflow state
-- Domain libraries that auto-detect from user input
-- Testing strategy with mutation coverage targets
 
----
----
-
-## How We Differ
+- 16 specialized product skills (Job To Be Done, Opportunity Mapping, Product Discovery, Pricing, Promotions, Trust Building, and more)
+- Real-time TUI tracking with visual overlay (`/pw:menu`)
+- Gate approval via Plannotator — review, comment, approve or reject before implementation
+- Typed scopes for autonomous execution (feature, spike, test-*, optimize)## How We Differ
 
 This workflow focuses on **product planning** rather than pure code generation. Here's how it compares:
 
 | Aspect | Standard Agent | Heavy Framework | pi-product-workflow |
 |--------|---------------|-----------------|---------------------|
-| **Scope** | Open-ended | Full lifecycle | Shaped proposals |
-| **Review** | Manual | Configured | AI-powered critique |
-| **Domain Skills** | None | Generic | Product-specific |
-| **Testing** | Ad-hoc | Configured | AI-aware mutation |
-| **Tracking** | None | Varies | Real-time TUI |
+| **Scope** | Open-ended | Full lifecycle | Shaped proposals with IN/OUT |
+| **Review** | Manual chat | Configured | Adversarial critique + Gate |
+| **Domain Skills** | None | Generic | 8 product-specific (auto-detected) |
+| **Testing** | Ad-hoc | Configured | AI-aware mutation coverage |
+| **Interface** | None | Coded mockups | ASCII art + tradeoffs + hybrid |
+| **Tracking** | None | Varies | Real-time TUI + visual overlay |
 
 ### Key Differences
 
 **vs. Claude Code / OpenCode:**
-- Not just code generation — shapes proposals before coding
-- Built-in adversarial critique for every plan
-- Domain libraries that auto-detect from user input
+
+Both have a "plan" mode, but it's basic — restrict tools and add generic planning instructions. There's no structured product thinking: no scope boundaries, no adversarial critique, no domain-specific playbooks, no visual review gates.
+
+- **Shapes proposals before coding** — with clear IN/OUT boundaries
+- **Adversarial plan critique** — catches gaps, risks, and assumptions
+- **Domain libraries** — auto-detect from user input (pricing, ads, trust, etc.)
+- **Visual review gate** — Plannotator opens the full plan for point-by-point comments (not just chat)
 
 **vs. BMAD Method / Superpowers:**
-- Lighter framework — only phases you need
-- Product-specific skills (JTBD, Pricing, Trust Building, etc.)
-- Auto-detection of relevant domain playbooks
 
-**vs. Generic pi.extensions:**
-- Structured workflow with clear phases
-- Gate approval before technical work
-- Typed scopes for autonomous execution
+These frameworks enforce structure too, but for general software engineering. This workflow is purpose-built for **product planning**:
+
+- *"Measure thrice, cut once"* — intentional depth across scope, interface, and critique before writing a line of code
+- Product-specific skills — Job To Be Done, Pricing, Trust Building, Ads, Promotions, etc.
+- Interface exploration with ASCII art — visualize tradeoffs and fluxos in seconds
+- LLM creates a hybrid version from the best points of each alternative
+- Works for **greenfield** (new products) and **brownfield** (existing products)
 
 ### Philosophy
 
 **Traditional AI development:** "Here's what I want. Start coding."
 
-**With pi-product-workflow:** "Shape the proposal. Review the plan. Get approval. Then build."
+**With pi-product-workflow:** The user just says:
 
-This prevents wasted technical work by ensuring every feature is:
-1. Clearly scoped with boundaries
-2. Reviewed for gaps and risks
-3. Approved before implementation
-4. Tested with AI-aware mutation coverage
+```
+/pw:start "Here's what I want to build"
+```
 
-## About the Author
+And the workflow begins asking questions, exploring scope, shaping the proposal, reviewing for gaps, getting visual approval, and only then generating typed technical scopes for execution.## About the Author
 
 **[Renato Caliari](https://www.linkedin.com/in/calirenato82/)** — Product specialist with hands-on experience:
 
@@ -246,7 +248,7 @@ pi -e npm:@renatocaliari/pi-product-workflow
         ├── interfaces/          # interfaces.md
         ├── plans/               # spec-tech.md, testing-strategy.md
         ├── critiques/          # critique-report.md
-        ├── strategic/           # JTBD, opportunity, market analysis
+        ├── strategic/           # Job To Be Done, opportunity, market analysis
         ├── approvals/           # *.receipt.md
         └── sessions/            # checkpoint.json
 ```
@@ -281,10 +283,10 @@ pi -e npm:@renatocaliari/pi-product-workflow
                         │
                         ▼
  ┌─────────────────────────────────────────────────────────────┐
- │  2. Strategic Context (Optional) ─── parallel exploration ──┐
- │  ┌──────┐  ┌──────────┐  ┌──────────┐  ┌──────┐  ┌─────┐ │
- │  │ JTBD │─▶│Evolution │─▶│Opportun. │─▶│Market│─▶│Discovery│ │
- │  └──────┘  └──────────┘  └──────────┘  └──────┘  └─────┘ │
+ │  2. Strategic Context (Optional) — parallel exploration —┐
+ │  ┌──────┐  ┌──────────┐  ┌──────────┐  ┌──────┐  ┌────────┐ │
+ │  │ JTBD  │─▶│Evolution│─▶│Opportun.│─▶│Market│─▶│Discover│ │
+ │  └──────┘  └──────────┘  └──────────┘  └──────┘  └────────┘ │
  │                      Explore before betting                 │
  └──────────────────────┬──────────────────────────────────────┘
                         │
@@ -512,7 +514,7 @@ All commands use the `/product-workflow-` prefix. Short `/pw:` aliases work too.
 |-------|---------|-------------|
 | **Product Discovery** | `/skill:cali-product-short-cycle` | Rapid validation method |
 | **Opportunity Mapping** | `/skill:cali-product-opportunity-mapping` | Strategic opportunities |
-| **Job-to-Be-Done** | `/skill:cali-product-job-to-be-done` | JTBD framework |
+| **Job-to-Be-Done** | `/skill:cali-product-job-to-be-done` | Job To Be Done framework |
 | **Evolutionary Principles** | `/skill:cali-evolutionary-principles` | Product evolution |
 | **Multi-Method Market** | `/skill:cali-product-multi-method-market-analysis` | PESTLE, Wardley, Foresight |
 
