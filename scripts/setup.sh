@@ -2,6 +2,7 @@
 #
 # pi-product-workflow setup script
 # Installs all required dependencies for this package
+# Handles dual-install pattern: core + stub extension
 #
 set -euo pipefail
 
@@ -49,13 +50,29 @@ for pkg in "${REQUIRED_PACKAGES[@]}"; do
 done
 echo ""
 
-echo "📦 Installing this package..."
-pi install "$PACKAGE_DIR" 2>/dev/null || true
+echo "📦 Installing packages (dual-install pattern)..."
+# 1. Core package (skills, adapters, etc.)
+echo "   → @renatocaliari/pi-product-workflow (core)"
+pi install npm:@renatocaliari/pi-product-workflow 2>/dev/null || {
+  echo "   Note: Installing from local source instead"
+  pi install "$PACKAGE_DIR" 2>/dev/null || true
+}
+
+# 2. Stub extension (lightweight Pi integration)
+echo "   → @renatocaliari/cali-product-workflow-pi (stub extension)"
+pi install npm:@renatocaliari/cali-product-workflow-pi 2>/dev/null || {
+  echo "   Note: Installing stub extension from local source"
+  pi install "$PACKAGE_DIR/extensions/cali-product-workflow-pi" 2>/dev/null || true
+}
 echo ""
 
 echo "╔════════════════════════════════════════════════════════════╗"
 echo "║  Setup Complete!                                           ║"
 echo "╚════════════════════════════════════════════════════════════╝"
+echo ""
+echo "Installed packages:"
+echo "  • @renatocaliari/pi-product-workflow (core - skills, adapters)"
+echo "  • @renatocaliari/cali-product-workflow-pi (stub extension)"
 echo ""
 echo "Next steps:"
 echo "  1. Run: pi"

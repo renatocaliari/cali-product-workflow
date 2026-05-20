@@ -2,6 +2,7 @@
 #
 # pi-product-workflow uninstall script
 # Removes this package and cleans up configuration
+# Handles dual-install pattern: core + stub extension
 #
 set -euo pipefail
 
@@ -19,10 +20,18 @@ if ! command -v pi &> /dev/null; then
   echo "   Proceeding with cleanup only..."
 fi
 
-echo "📦 Removing package from pi..."
+echo "📦 Removing packages (dual-install pattern)..."
 if command -v pi &> /dev/null; then
+  # Remove core package
+  echo "   → @renatocaliari/pi-product-workflow (core)"
   pi remove npm:@renatocaliari/pi-product-workflow 2>/dev/null || {
-    echo "   Note: Package may not be in settings.json (manual install?)"
+    echo "   Note: Core package may not be installed"
+  }
+  
+  # Remove stub extension
+  echo "   → @renatocaliari/cali-product-workflow-pi (stub extension)"
+  pi remove npm:@renatocaliari/cali-product-workflow-pi 2>/dev/null || {
+    echo "   Note: Stub extension may not be installed"
   }
 fi
 echo ""
@@ -47,11 +56,12 @@ echo "║  Uninstall Complete!                                       ║"
 echo "╚════════════════════════════════════════════════════════════╝"
 echo ""
 echo "What was removed:"
-echo "  • pi-product-workflow package from settings"
+echo "  • @renatocaliari/pi-product-workflow (core)"
+echo "  • @renatocaliari/cali-product-workflow-pi (stub extension)"
 echo "  • ~/.pi/agent/AGENTS.md (if it was ours)"
 echo ""
 echo "What remains:"
-echo "  • Dependencies (pi-subagents, pi-goal, etc.) — remove separately if desired"
+echo "  • Supporting packages (pi-subagents, pi-goal, etc.) — remove separately if desired"
 echo "  • Project files in ~/pi-product-workflow — delete manually if desired"
 echo ""
 echo "To fully remove all traces:"
