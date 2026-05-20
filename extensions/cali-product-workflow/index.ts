@@ -1,3 +1,4 @@
+// @ts-ignore - Optional peer dependency for Pi environment
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";

@@ -5,10 +5,12 @@
  * Uses Pi's native ExtensionAPI for TUI components.
  */
 
+// @ts-ignore - Optional peer dependency for Pi environment
 import type { ExtensionContext, ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import {
   Container, Text, Spacer, SelectList, matchesKey, Key,
   type SelectItem
+// @ts-ignore - Optional peer dependency for Pi environment
 } from "@earendil-works/pi-tui";
 import type { CLI } from "../../types";
 import type { NotificationType, SelectOption, StatusInfo } from "../cli-adapter";
@@ -66,7 +68,7 @@ export class PiUIAdapter implements UIAdapter {
     
     return new Promise<string | null>((resolve) => {
       this.ctx!.ui!.custom<string | null>(
-        (_tui, theme, _kb, done) => {
+        (_tui: any, theme: any, _kb: any, done: (result: string | null) => void) => {
           const c = new Container();
           
           if (title) {
@@ -81,7 +83,7 @@ export class PiUIAdapter implements UIAdapter {
             scrollInfo: (t: string) => theme.fg("dim", t),
             noMatch: (t: string) => theme.fg("warning", t),
           });
-          sl.onSelect = (item) => done(item.value);
+          sl.onSelect = (item: any) => done(item.value);
           sl.onCancel = () => done(null);
           c.addChild(sl);
           c.addChild(new Spacer(1));
@@ -102,7 +104,7 @@ export class PiUIAdapter implements UIAdapter {
           overlay: true,
           overlayOptions: { width: "50%", minWidth: 44, maxHeight: "70%", anchor: "center" },
         }
-      ).then((result) => resolve(result ?? null));
+      ).then((result: any) => resolve(result ?? null));
     });
   }
   

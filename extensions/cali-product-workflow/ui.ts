@@ -5,6 +5,7 @@
  * Uses the adapter pattern to delegate to CLI-specific implementations.
  */
 
+// @ts-ignore - Optional peer dependency for Pi environment
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 import type { Workflow } from "./types";
 import { PHASE_NAMES } from "./types";
@@ -172,6 +173,7 @@ export function showOverlay(ctx: ExtensionContext, cwd: string): void {
 function showPiOverlay(ctx: ExtensionContext, wf: Workflow): void {
   // Import Pi TUI components - only load when needed
   // eslint-disable-next-line @typescript-eslint/no-var-requires
+// @ts-ignore - Optional peer dependency for Pi environment
   const tui = require("@earendil-works/pi-tui");
   const { Container, Text, Spacer, SelectList, matchesKey, Key } = tui;
   
@@ -183,7 +185,7 @@ function showPiOverlay(ctx: ExtensionContext, wf: Workflow): void {
   }
   
   ctx.ui.custom<string | null>(
-    (_tui, theme, _kb, done) => {
+    (_tui: any, theme: any, _kb: any, done: (result: any) => void) => {
       const items: SelectItem[] = wf.phases.map((p, i) => {
         const icon = p.status === "completed" ? "✓" :
           p.status === "in-progress" ? "◆" : "○";
@@ -231,7 +233,7 @@ function showPiOverlay(ctx: ExtensionContext, wf: Workflow): void {
       overlay: true,
       overlayOptions: { width: "50%", minWidth: 44, maxHeight: "70%", anchor: "center" },
     }
-  ).then(action => {
+  ).then((action: any) => {
     if (action === "next") getUIAdapter().notify("Use /pw:next", "info");
     else if (action === "stop") getUIAdapter().notify("Use /pw:stop", "info");
   });
@@ -248,7 +250,7 @@ function showGenericOverlay(wf: Workflow): void {
       p.status === "in-progress" ? "Current" : "Pending"
   }));
   
-  adapter.select(options, `◆ ${wf.name}`).then(result => {
+  adapter.select(options, `◆ ${wf.name}`).then((result: any) => {
     if (result === "next") {
       adapter.notify("Use /pw:next", "info");
     } else if (result === "stop") {
@@ -320,6 +322,7 @@ function showPiOrphanOverlay(
   }
   
   // eslint-disable-next-line @typescript-eslint/no-var-requires
+// @ts-ignore - Optional peer dependency for Pi environment
   const { Container, Text, Spacer, SelectList } = require("@earendil-works/pi-tui");
   
   return new Promise(resolve => {
@@ -330,7 +333,7 @@ function showPiOrphanOverlay(
     }));
     
     ctx.ui.custom<string | null>(
-      (_tui, theme, _kb, done) => {
+      (_tui: any, theme: any, _kb: any, done: (result: any) => void) => {
         const c = new Container();
         c.addChild(new Text(
           theme.fg("warning", theme.bold(`📦 ${orphans.length} workflow(s) in progress`)), 1, 0
@@ -365,7 +368,7 @@ function showPiOrphanOverlay(
         overlay: true,
         overlayOptions: { width: "50%", minWidth: 48, maxHeight: "70%", anchor: "center" },
       }
-    ).then(result => {
+    ).then((result: any) => {
       if (result === "__archive_all__") {
         archiveWorkflows(cwd, orphans);
         ctx.ui?.notify(`Archived ${orphans.length} workflow(s)`, "info");

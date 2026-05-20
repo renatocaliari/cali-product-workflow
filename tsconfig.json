@@ -12,15 +12,17 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "allowSyntheticDefaultImports": true,
-    "types": ["vitest/globals"]
+    "allowImportingTsExtensions": true,
+    "types": ["vitest/globals", "node"]
   },
   "include": [
     "extensions/**/*.ts",
     "scripts/**/*.ts",
-    "tests/**/*.ts"
+    "types/**/*.d.ts"
   ],
   "exclude": [
     "node_modules",
-    "dist"
+    "dist",
+    "tests/**/*"
   ]
 }

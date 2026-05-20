@@ -1,7 +1,9 @@
 import { rmSync } from "node:fs";
 import { join } from "node:path";
 import { homedir } from "node:os";
+// @ts-ignore - Optional peer dependency for Pi environment
 import type { ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
+// @ts-ignore - Optional peer dependency for Pi environment
 import { Container, Text, Spacer, SelectList, type SelectItem } from "@earendil-works/pi-tui";
 import { WORKFLOW_DIR, PHASE_NAMES } from "./types";
 import {
@@ -158,7 +160,7 @@ function showStopPicker(
 ): void {
   if (!ctx.ui) return;
   ctx.ui.custom<string | null>(
-    (_tui, theme, _kb, done) => {
+    (_tui: any, theme: any, _kb: any, done: (result: any) => void) => {
       const items = [
         {
           value: "__all__",
@@ -206,7 +208,7 @@ function showStopPicker(
       overlay: true,
       overlayOptions: { width: "50%", minWidth: 46, maxHeight: "70%", anchor: "center" },
     }
-  ).then(selection => {
+  ).then((selection: any) => {
     if (selection === "__all__") {
       const diskWfs = reconcileTracking(cwd);
       const globalWfs = (readGlobalTracking()?.workflows ?? [])
