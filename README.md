@@ -112,7 +112,9 @@ Both frameworks enforce structure for general software engineering. Here's what 
 | **Testing** | Sprint-based (dev-story + code-review) | TDD-first with subagents | Context-aware: TDD critical paths, mutation targets (70/50/30%), greenfield/brownfield |
 | **Execution** | Story-by-story sprint cycle | Batch execution with review checkpoints | Typed scopes with dependency mapping and sequencing |
 
-**Interface exploration comparison:**
+---
+
+### Interface exploration comparison
 
 | Aspect | [Superpowers](https://github.com/obra/superpowers) brainstorming | pi-product-workflow |
 |--------|---|---|
