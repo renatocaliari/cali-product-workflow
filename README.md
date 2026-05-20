@@ -114,7 +114,9 @@ And the workflow begins asking questions, exploring scope, shaping the proposal,
 - 16 specialized product skills (Job To Be Done, Opportunity Mapping, Product Discovery, Pricing, Promotions, Trust Building, and more)
 - Real-time TUI tracking with visual overlay (`/pw:menu`)
 - Gate approval via Plannotator — review, comment, approve or reject before implementation
-- Typed scopes for autonomous execution (feature, spike, test-*, optimize)## How We Differ
+- Typed scopes for autonomous execution (feature, spike, test-*, optimize)
+
+## How We Differ
 
 This workflow combines product planning, domain knowledge, and technical execution for digital products. Here's how it compares:
 
