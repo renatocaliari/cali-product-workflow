@@ -17,14 +17,6 @@ This package brings [Shape Up](https://basecamp.com/shapeup) methodology to AI c
 - **Typed technical scopes** — feature, spike, optimize, test-* with dependency mapping and sequencing
 - **Real-time TUI tracking** — see workflow state as it progresses
 
-**Testing differentiators:**
-
-- **Context-aware strategy** — different approaches for greenfield, brownfield, and hybrid products
-- **8 test scope types** — test-unit, test-integration, test-security, test-behavior, test-regression, test-characterization, test-simulation, test-impact
-- **Mutation coverage targets** — 70% for critical paths (payments, auth), 50% for standard, 30% for experimental
-- **TDD for critical paths** — test-first for new code; test-after + regression for existing code
-- **Security gates** — automated security tests for auth, payment, and data-sensitive operations
-
 *"Measure thrice, cut once"* — applies to product decisions, not just code.
 
 ---
@@ -42,7 +34,6 @@ This package brings [Shape Up](https://basecamp.com/shapeup) methodology to AI c
 - [🎮 Commands](#-commands)
 - [🖥️ TUI Visual](#️-tui-visual)
 - [📋 Skills (16)](#-skills-16)
-- [🧪 Testing Strategy](#-testing-strategy-software-products-only)
 - [📊 Version](#-version)
 - [License](#license)
 
@@ -577,7 +568,9 @@ All commands use the `/product-workflow-` prefix. Short `/pw:` aliases work too.
 | Skill | Command | Description |
 |-------|---------|-------------|
 | **Scope Executor** | `/skill:cali-product-scope-executor` | Autonomous scope execution |
-| **Testing AI Code** | `/skill:cali-testing-ai-code` | AI-aware testing strategy |
+| **Testing AI Code** | `/skill:cali-testing-ai-code` | AI-aware testing strategy (software products) |
+
+> **Note:** See `cali-testing-ai-code` skill documentation for mutation-based testing strategy generation.
 
 ---
 
@@ -593,59 +586,9 @@ All commands use the `/product-workflow-` prefix. Short `/pw:` aliases work too.
 
 
 
-## 🧪 Testing Strategy (Software Products Only)
-
-When `product_type: software` or `product_type: hybrid`, the workflow auto-activates `cali-testing-ai-code` skill.
-
-### Greenfield (New Code)
-
-| Test Type | Use Case | TDD? |
-|-----------|----------|------|
-| `test-unit` | Business logic, critical paths | ✅ Yes |
-| `test-integration` | DB, APIs, queues | No |
-| `test-security` | Auth, payment, data | No |
-| `test-behavior` | AI agents, multi-step flows | No |
-
-### Brownfield (Existing Code)
-
-| Test Type | Use Case |
-|-----------|----------|
-| `test-regression` | Protect existing functionality |
-| `test-characterization` | Document current behavior (golden tests) |
-| `test-simulation` | Replay past successful tasks |
-| `test-impact` | TDAD-style dependency analysis |
-
-### Mutation Targets
-
-| Path Type | Target | Minimum |
-|-----------|--------|---------|
-| Critical | 70% | 60% |
-| Standard | 50% | 40% |
-| Experimental | 30% | 20% |
-
-### CI/CD Gates
-
-```yaml
-mutation_score: < target → BLOCK
-security_findings: > 0 on critical → BLOCK
-flaky_rate: > 5% → WARN
-```
-
 ---
 
-
-
-
-
-
-
-
-
-
-
-
-
-## 📊 Version
+## 📊 Version## 📊 Version
 
 **Current**: 0.2.2-alpha
 
