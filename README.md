@@ -57,7 +57,7 @@ And the workflow begins asking questions, exploring scope, shaping the proposal,
 - ✅ **Strategic exploration** — Job To Be Done, Opportunity Mapping, Evolutionary Principles, Market Analysis, and Product Discovery knowledge integrated
 - ✅ **Adversarial critique** — reviews every plan for gaps, risks, and assumptions
 - ✅ **Visual review gate** — Plannotator opens the full plan for point-by-point comments (not just chat)
-- ✅ **Interface exploration in ASCII art** — visualize 5 different approaches in seconds, no coding wasted, then LLM creates a hybrid version combining the best of each
+- ✅ **Interface exploration in ASCII art** — visualize 5 different approaches in seconds, no coding wasted, then LLM creates a hybrid version combining the best points for the context
 - ✅ **Domain libraries** — auto-detects 8 product domains (Pricing, Trust, Ads, etc.) from your language
 - ✅ **Technical scope mapping** — breaks down into typed scopes, maps dependencies, sequences execution
 - ✅ **AI-aware mutation testing** — for software products, with coverage targets and CI gates
@@ -99,7 +99,7 @@ These frameworks enforce structure too, but for general software engineering. Th
 - *"Measure thrice, cut once"* — intentional depth across scope, interface, and critique before writing a line of code
 - **Product + Technical scope** — not just planning, but breaks down into typed scopes, maps dependencies, sequences execution
 - Product-specific skills — Job To Be Done, Pricing, Trust Building, Ads, Promotions, etc.
-- Interface exploration with ASCII art — visualize 5 approaches in seconds, then LLM creates hybrid combining best of each
+- Interface exploration with ASCII art — visualize 5 approaches in seconds, then LLM creates hybrid combining best points for the context
 - Works for **greenfield** (new products) and **brownfield** (existing products)
 
 #--|-------------|
