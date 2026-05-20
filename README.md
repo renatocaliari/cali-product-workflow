@@ -4,6 +4,21 @@
 
 This package brings Shape Up's betting table methodology to pi.dev. Instead of open-ended feature lists, you shape proposals with clear scope boundaries, validate them through adversarial critique, and generate typed technical scopes ready for autonomous execution. Includes 16 specialized product skills (JTBD, Opportunity Mapping, Short-Cycle validation, pricing strategies, trust building, and more), a real-time TUI for workflow state, and AI-aware mutation testing strategy for software products.
 
+---
+
+## 📋 Table of Contents
+
+- [🚀 Quick Start](#-quick-start)
+- [📦 Installation](#-installation)
+- [📁 Artifact Directory](#-artifact-directory)
+- [🔄 Workflow Flow](#-workflow-flow)
+- [🎮 Commands](#-commands)
+- [🖥️ TUI Visual](#️-tui-visual)
+- [🧪 Testing Strategy](#-testing-strategy-software-products-only)
+- [📋 Skills](#-skills-16)
+- [🔧 Dependencies](#-dependencies)
+- [📊 Version](#-version)
+- [License](#license)
 
 ---
 
@@ -23,6 +38,7 @@ This package brings Shape Up's betting table methodology to pi.dev. Instead of o
 
 
 ---
+
 
 ## 📦 Installation
 
@@ -92,6 +108,30 @@ pi -e npm:@renatocaliari/pi-product-workflow
 
 ---
 
+
+## 📁 Artifact Directory
+
+```
+.cali-product-workflow/
+└── {YYYY-MM-DD}/
+    └── {_dir}/          # Hash-based, stable on rename
+        ├── index.json
+        ├── specs/               # spec-product.md
+        ├── interfaces/          # interfaces.md
+        ├── plans/               # spec-tech.md, testing-strategy.md
+        ├── critiques/          # critique-report.md
+        ├── strategic/           # JTBD, opportunity, market analysis
+        ├── approvals/           # *.receipt.md
+        └── sessions/            # checkpoint.json
+```
+
+---
+
+
+---
+
+
+
 ## 🔄 Workflow Flow
 
 ```
@@ -133,10 +173,11 @@ pi -e npm:@renatocaliari/pi-product-workflow
                         ▼
               ┌─────────┴─────────┐
               │                   │
+              │     Interface?    │
+              │    (optional)      │
               ▼                   ▼
      ┌────────────────┐   ┌─────────────────────────┐
-     │  Shape Up Only  │   │  + Interface Design     │
-     │     (skip)      │   │  6-9. Brainstorm → Gate │
+     │  skip to #10    │   │  6-9. Brainstorm → Gate │
      └────────┬───────┘   └───────────┬───────────────┘
               │                       │
               └───────────┬───────────┘
@@ -166,17 +207,25 @@ pi -e npm:@renatocaliari/pi-product-workflow
  │  11. Execution ─── Autonomous via /goal                     │
  └─────────────────────────────────────────────────────────────┘
 
- ───▶  Required    ─ ─▶  Optional / Conditional
-
- Domain Libraries (reference anytime):
-   Ads · Business Models · Health · Marketplace · Open Source
-   Pricing · Promotions · Trust Building
+ ═════▶  Required flow
+ ─────▶  Optional / Conditional (dotted line)
 ```
+
+### Domain Libraries (Tactical Reference)
+
+Invoke via `/skill:cali-product-{name}` when relevant during planning/execution.
+
+┌─────────────────────────────────────────────────────────────┐
+│  ┌──────────┐ ┌───────────────┐ ┌─────────┐ ┌────────────┐ │
+│  │   Ads    │ │Business Models│ │ Pricing │ │ Promotions │ │
+│  └──────────┘ └───────────────┘ └─────────┘ └────────────┘ │
+│  ┌──────────┐ ┌───────────────┐ ┌─────────┐ ┌────────────┐ │
+│  │  Health  │ │  Marketplace  │ │Open Src │ │Trust Build │ │
+│  └──────────┘ └───────────────┘ └─────────┘ └────────────┘ │
+└─────────────────────────────────────────────────────────────┘
 
 > **Why this matters:** Scope is shaped BEFORE planning, not after. Every plan gets adversarial critique. Gate approval prevents wasted technical work.
 
-
----
 
 ## 🎮 Commands
 
@@ -207,6 +256,51 @@ All commands use the `/product-workflow-` prefix. Short `/pw:` aliases work too.
 
 
 ---
+
+
+## 🖥️ TUI Visual
+
+**Active Workflow:**
+```
+│ auth-system  │  ◆ Shape 3/7  │  2 assumptions  │  /pw:menu for details
+└─────────────────────────────────────────────────────────────────────
+```
+
+**Active with Artifacts:**
+```
+│ auth-system  │  ◆ Interface 3/7  │  5 proposals · hybrid:C  │  /pw:menu
+└─────────────────────────────────────────────────────────────────────────
+```
+
+**Paused:**
+```
+│ ⏸ auth-system                                       │  ← Warning color
+└─────────────────────────────────────────────────────────────────────
+```
+
+### Interactive Overlay (`/pw:menu`)
+
+```
+╔═══════════════════════════════════╗
+║  ◆ auth-system                    ║
+║                                   ║
+║  ✓ Clarify                       ║
+║  ◆ Shape   ← current             ║
+║  ○ Interface                     ║
+║  ○ Critique                      ║
+║  ○ Gate                          ║
+║  ○ Planning                      ║
+║  ○ Execution                     ║
+║                                   ║
+║  ↑↓ navigate  n:next  s:stop     ║
+╚═══════════════════════════════════╝
+```
+
+---
+
+
+---
+
 
 ## 🧪 Testing Strategy (Software Products Only)
 
@@ -250,6 +344,7 @@ flaky_rate: > 5% → WARN
 
 
 ---
+
 
 ## 📋 Skills (16)
 
@@ -298,69 +393,6 @@ flaky_rate: > 5% → WARN
 
 ---
 
-## 🖥️ TUI Visual
-
-**Active Workflow:**
-```
-│ auth-system  │  ◆ Shape 3/7  │  2 assumptions  │  /pw:menu for details
-└─────────────────────────────────────────────────────────────────────
-```
-
-**Active with Artifacts:**
-```
-│ auth-system  │  ◆ Interface 3/7  │  5 proposals · hybrid:C  │  /pw:menu
-└─────────────────────────────────────────────────────────────────────────
-```
-
-**Paused:**
-```
-│ ⏸ auth-system                                       │  ← Warning color
-└─────────────────────────────────────────────────────────────────────
-```
-
-### Interactive Overlay (`/pw:menu`)
-
-```
-╔═══════════════════════════════════╗
-║  ◆ auth-system                    ║
-║                                   ║
-║  ✓ Clarify                       ║
-║  ◆ Shape   ← current             ║
-║  ○ Interface                     ║
-║  ○ Critique                      ║
-║  ○ Gate                          ║
-║  ○ Planning                      ║
-║  ○ Execution                     ║
-║                                   ║
-║  ↑↓ navigate  n:next  s:stop     ║
-╚═══════════════════════════════════╝
-```
-
----
-
-
----
-
-## 📁 Artifact Directory
-
-```
-.cali-product-workflow/
-└── {YYYY-MM-DD}/
-    └── {_dir}/          # Hash-based, stable on rename
-        ├── index.json
-        ├── specs/               # spec-product.md
-        ├── interfaces/          # interfaces.md
-        ├── plans/               # spec-tech.md, testing-strategy.md
-        ├── critiques/          # critique-report.md
-        ├── strategic/           # JTBD, opportunity, market analysis
-        ├── approvals/           # *.receipt.md
-        └── sessions/            # checkpoint.json
-```
-
----
-
-
----
 
 ## 🔧 Dependencies
 
@@ -379,6 +411,7 @@ flaky_rate: > 5% → WARN
 
 ---
 
+
 ## 📊 Version
 
 **Current**: 0.2.2-alpha
@@ -389,6 +422,7 @@ flaky_rate: > 5% → WARN
 
 
 ---
+
 
 ## License
 
