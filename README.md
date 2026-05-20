@@ -6,6 +6,61 @@ This package brings [Shape Up](https://basecamp.com/shapeup) methodology to AI c
 
 ---
 
+
+
+### Interface exploration comparison
+
+| Aspect | [Superpowers](https://github.com/obra/superpowers) brainstorming | pi-product-workflow |
+|--------|---|---|
+| **Approaches** | 2-3 options | 5 archetypes |
+| **Format** | Text descriptions (200-300 words each) | ASCII art with flows and trade-offs |
+| **Visual** | Optional browser companion for mockups | Built-in ASCII art generation |
+| **Recommendation** | Agent picks best option | LLM creates hybrid combining best points |
+
+**Key differentiators:**
+
+- **Product domain libraries** — 8 domains auto-detected from your language (Pricing, Trust, Ads, Promotions, Open Source, Health, Marketplace, Business Models)
+- **Visual review gate** — Plannotator opens the full plan in a visual interface for comments, not just chat
+- **Interface exploration** — 5 approaches in ASCII art with flows and trade-offs, then LLM creates hybrid combining best points for the context
+- **[Shape Up](https://basecamp.com/shapeup) methodology** — IN/OUT scope boundaries, betting table concepts, aphorisms
+- **Typed technical scopes** — feature, spike, optimize, test-* with dependency mapping and sequencing
+- **Real-time TUI tracking** — see workflow state as it progresses
+
+**Testing differentiators:**
+
+- **Context-aware strategy** — different approaches for greenfield, brownfield, and hybrid products
+- **8 test scope types** — test-unit, test-integration, test-security, test-behavior, test-regression, test-characterization, test-simulation, test-impact
+- **Mutation coverage targets** — 70% for critical paths (payments, auth), 50% for standard, 30% for experimental
+- **TDD for critical paths** — test-first for new code; test-after + regression for existing code
+- **Security gates** — automated security tests for auth, payment, and data-sensitive operations
+
+*"Measure thrice, cut once"* — applies to product decisions, not just code.
+
+---
+
+## 📋 Table of Contents
+
+- [Philosophy](#philosophy)
+- [About the Author](#about-the-author)
+- [Why This Exists](#why-this-exists)
+- [🚀 Quick Start](#-quick-start)
+- [📦 Installation](#-installation)
+- [🔧 Dependencies](#-dependencies)
+- [📁 Artifact Directory](#-artifact-directory)
+- [🔄 Process](#-process)
+- [🎮 Commands](#-commands)
+- [🖥️ TUI Visual](#️-tui-visual)
+- [📋 Skills (16)](#-skills-16)
+- [🧪 Testing Strategy](#-testing-strategy-software-products-only)
+- [📊 Version](#-version)
+- [License](#license)
+
+---
+
+
+---
+
+
 ## Philosophy
 
 > *"Let's go slow to go fast: invest time in thorough planning to gain speed and deliver value in execution."*
@@ -101,7 +156,7 @@ This workflow: generates 5 interface archetypes as ASCII art with flows and trad
 Both frameworks enforce structure for general software engineering. Here's what differentiates this workflow:
 
 | Aspect | [BMAD Method](https://github.com/bmad-code-org/BMAD-METHOD) | [Superpowers](https://github.com/obra/superpowers) | pi-product-workflow |
-|--------|---|---|
+|--------|--------|---------|-----------|
 | **Stars** | ~47K | ~199K | — |
 | **Focus** | Enterprise team simulation (12+ workflows) | TDD-first engineering methodology | Product planning + domain knowledge + execution |
 | **Phases** | 4 (Analysis → Planning → Solutioning → Implementation) | Skills system (14 skills) | 6 (Setup → Strategic → Shape Up → Interface → Critique → Tech) |
@@ -113,53 +168,6 @@ Both frameworks enforce structure for general software engineering. Here's what 
 | **Execution** | Story-by-story sprint cycle | Batch execution with review checkpoints | Typed scopes with dependency mapping and sequencing |
 
 ---
-
-### Interface exploration comparison
-
-| Aspect | [Superpowers](https://github.com/obra/superpowers) brainstorming | pi-product-workflow |
-|--------|---|---|
-| **Approaches** | 2-3 options | 5 archetypes |
-| **Format** | Text descriptions (200-300 words each) | ASCII art with flows and trade-offs |
-| **Visual** | Optional browser companion for mockups | Built-in ASCII art generation |
-| **Recommendation** | Agent picks best option | LLM creates hybrid combining best points |
-
-**Key differentiators:**
-
-- **Product domain libraries** — 8 domains auto-detected from your language (Pricing, Trust, Ads, Promotions, Open Source, Health, Marketplace, Business Models)
-- **Visual review gate** — Plannotator opens the full plan in a visual interface for comments, not just chat
-- **Interface exploration** — 5 approaches in ASCII art with flows and trade-offs, then LLM creates hybrid combining best points for the context
-- **[Shape Up](https://basecamp.com/shapeup) methodology** — IN/OUT scope boundaries, betting table concepts, aphorisms
-- **Typed technical scopes** — feature, spike, optimize, test-* with dependency mapping and sequencing
-- **Real-time TUI tracking** — see workflow state as it progresses
-
-**Testing differentiators:**
-
-- **Context-aware strategy** — different approaches for greenfield, brownfield, and hybrid products
-- **8 test scope types** — test-unit, test-integration, test-security, test-behavior, test-regression, test-characterization, test-simulation, test-impact
-- **Mutation coverage targets** — 70% for critical paths (payments, auth), 50% for standard, 30% for experimental
-- **TDD for critical paths** — test-first for new code; test-after + regression for existing code
-- **Security gates** — automated security tests for auth, payment, and data-sensitive operations
-
-*"Measure thrice, cut once"* — applies to product decisions, not just code.
-
----
-
-## 📋 Table of Contents
-
-- [🚀 Quick Start](#-quick-start)
-- [📦 Installation](#-installation)
-- [🔧 Dependencies](#-dependencies)
-- [📁 Artifact Directory](#-artifact-directory)
-- [🔄 Process](#-process)
-- [🎮 Commands](#-commands)
-- [🖥️ TUI Visual](#️-tui-visual)
-- [🧪 Testing Strategy](#-testing-strategy-software-products-only)
-- [📋 Skills](#-skills-16)
-- [📊 Version](#-version)
-- [License](#license)
-
----
-
 
 
 
