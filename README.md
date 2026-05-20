@@ -92,15 +92,29 @@ Both have a "plan" mode, but it's basic — restrict tools and add generic plann
 - **Domain libraries** — auto-detect from user input (pricing, ads, trust, etc.)
 - **Visual review gate** — Plannotator opens the full plan for point-by-point comments (not just chat)
 
-**vs. BMAD Method / Superpowers:**
+**vs. BMAD Method (45K ⭐) and Superpowers (180K ⭐):**
 
-These frameworks enforce structure too, but for general software engineering. This workflow is purpose-built for **digital product planning and technical execution**:
+Both frameworks enforce structure for general software engineering. Here's what differentiates this workflow:
 
-- *"Measure thrice, cut once"* — intentional depth across scope, interface, and critique before writing a line of code
-- **Product + Technical scope** — not just planning, but breaks down into typed scopes, maps dependencies, sequences execution
-- Product-specific skills — Job To Be Done, Pricing, Trust Building, Ads, Promotions, etc.
-- Interface exploration with ASCII art — visualize 5 approaches in seconds, then LLM creates hybrid combining best points for the context
-- Works for **greenfield** (new products) and **brownfield** (existing products)
+| Aspect | BMAD Method | Superpowers | pi-product-workflow |
+|--------|-------------|--------------|---------------------|
+| **Focus** | Enterprise team simulation with 12+ agent personas | TDD-first engineering methodology | Product planning + domain-specific knowledge |
+| **Scope Definition** | General user stories | Implementation plans | Shape Up with IN/OUT boundaries |
+| **Domain Knowledge** | Generic workflows | Code patterns | Job To Be Done, Pricing, Trust, Ads, Open Source, etc. |
+| **Review** | Manual or configured | Subagent quality check | Plannotator visual gate with point-by-point comments |
+| **Interface** | PRD, diagrams | Plan documents | ASCII art exploration + LLM hybrid creation |
+| **Testing** | Depends on setup | TDD with subagents | AI-aware mutation with coverage targets |
+
+**Key differentiators:**
+
+- **Product domain libraries** (8 domains) auto-detected from your language — not generic engineering
+- **Visual review gate** — Plannotator opens the full plan in a visual interface for comments, not just chat
+- **Interface exploration** — 5 approaches in ASCII art, then LLM creates hybrid combining best points for the context
+- **Shape Up methodology** — IN/OUT scope boundaries, betting table concepts, aphorisms
+- **Typed technical scopes** — feature, spike, optimize, test-* with dependency mapping and sequencing
+- **Real-time TUI tracking** — see workflow state as it progresses
+
+*"Measure thrice, cut once"* — applies to product decisions, not just code.
 
 ---
 
@@ -378,6 +392,8 @@ Each domain has its own dedicated skill. The LLM automatically detects signals i
 | "ads", "paid traffic", "facebook ads" | Advertising stages |
 | "trust", "guarantee", "social proof" | Trust building |
 | "business model", "revenue", "monetize" | Business models |
+| "open source", "community edition" | Open source strategy |
+| "product health", "wellbeing", "ethics" | Product health |
 | "marketplace", "supply/demand" | Marketplace tactics |
 
 **Usage:** Invoke via `/skill:cali-product-{name}` when relevant during planning/execution.
