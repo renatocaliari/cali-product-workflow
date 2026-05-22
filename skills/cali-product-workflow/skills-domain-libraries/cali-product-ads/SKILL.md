@@ -1,75 +1,188 @@
 ---
 name: cali-product-ads
-description: Advertising strategies for online placement based on the Transtheoretical Model of Change. Covers the 5 stages of audience awareness and ad categories for each stage.
+version: 1.0.0
+description: >
+  [Cali] Ads and monetization strategies for products. Covers exchange mechanisms,
+  ad formats, metrics, and anti-patterns to avoid. For sustainable monetization
+  that doesn't destroy user trust.
+
+  Trigger keywords: advertising strategy, ad monetization, ad formats, pay-per-click,
+  sponsored content, display ads, revenue model
 ---
 
-# Communication: Ads for Online Placement
+# Product Ads
 
-The solution's audience can be in 5 stages according to the **Transtheoretical Model of Change**:
+## Goal
 
-## 5 Stages
+Design ad monetization that is sustainable and doesn't destroy user trust — balancing revenue generation with user experience.
 
-**1. Pre-contemplation (Ignorance)**: people who are not yet aware of the problem or that their life can be better.
-- *Focus*: raise awareness about the problem and its impacts, showing how life can be better if the problem is solved
-- *Communication*: highlight the benefits of a life without the problem, without directly mentioning the solution. Use stories, examples, and testimonials to generate identification and awaken interest.
-- *Calls to action*: engage with your brand (like, comment, download free material, follow on social media, subscribe to receive news) to nurture the relationship and increase awareness about the problem
+## Domain Context
 
-**2. Contemplation (Awareness)**: people who are aware of the problem and its urgencies, but haven't yet decided to seek a solution or don't know that one is available.
-- *Focus*: present your solution as an answer to the audience's urgencies, showing how it can solve the problem and improve people's lives
-- *Communication*: explain the benefits of your solution clearly and concisely, using testimonials, case studies, and demonstrations to prove its effectiveness
-- *Calls to action*: invite the audience to learn more about the solution, offering access to informative content, webinars, free demonstrations, or initial consultations
+Ads are a form of value exchange. Key themes:
+- **Exchange Mechanism** — How payment is tied to value delivered
+- **Format Selection** — Choosing the right ad format for your product
+- **Metrics** — Measuring ad performance without sacrificing UX
+- **Anti-patterns** — Patterns that destroy trust and long-term revenue
 
-**3. Preparation**: people who have already decided to seek a solution and are preparing to act.
-- *Focus*: help the audience prepare for change, providing detailed information, clarifying doubts, and assisting in planning next steps
-- *Communication*: offer educational content, step-by-step guides, planning tools, benefit calculators, and testimonials from customers who have successfully gone through the preparation phase
-- *Calls to action*: encourage the next step — schedule a consultation, request a quote, or enroll in a coaching program
+## Exchange Mechanisms
 
-**4. Action**: people who are implementing the change and using your solution.
-- *Focus*: offer support and encouragement so the audience stays motivated and overcomes change challenges
-- *Communication*: maintain regular contact with customers, offering tips, reminders, additional resources, and personalized follow-up. Create an environment of support and celebration of achievements.
-- *Calls to action*: encourage continuing to use the solution, share progress, and provide feedback on the experience
+### Pay Per Impression (CPM)
 
-**5. Maintenance**: people who have already adopted the solution and seek to maintain results and continue evolving.
-- *Focus*: retain customers, offering continuous support, relevant content, and improvement opportunities
-- *Communication*: maintain regular contact through email marketing, newsletters, social media, and exclusive events. Offer loyalty programs, solution updates, and educational content to keep them engaged.
-- *Calls to action*: encourage sharing experiences, providing feedback, participating in online communities, and referring your solution to other people
+Payment per thousand impressions. The advertiser pays for visibility, not for clicks or conversions. Best for brand awareness campaigns where reach is more important than immediate action.
 
----
+**Considerations:**
+- Requires significant traffic volume to generate meaningful revenue
+- Risk of optimizing for impressions over engagement
+- Best combined with other metrics (viewability, time on page)
 
-## Ad Categories by Stage
+### Pay Per Click (CPC)
 
-### Pre-Contemplation Phase
-- **Curiosity and Intrigue**: awaken curiosity with instigating questions, impactful phrases, and surprising information
-- **Impactful Images**: visually striking images that represent the problem or the negative impact
-- **Myths and Truths**: debunk mistaken beliefs about the problem
-- **Provocations and Questions**: challenge the audience with questions that lead them to reflect on their behaviors
-- **Future Scenarios**: present a positive future scenario vs. negative (if it persists)
-- **Comic Exaggeration**: use humor and exaggeration to make the problem lighter and more memorable
+Payment per click on the ad. The advertiser pays only when a user actively engages. Better alignment with advertiser goals than CPM.
 
-### Contemplation Phase
-- **Comparison and Solution**: show how your solution stands out from alternatives
-- **Detailed Explanations**: provide clear information about the problem and how your solution solves it
-- **Practical Demonstrations**: show the solution in action through videos, tutorials, success cases
-- **Creative Analogies**: use unexpected analogies and metaphors to explain the problem and solution
-- **Unexpected Benefits**: highlight the surprising and unexpected benefits your solution offers
-- **Dilemmas**: present common dilemmas the audience faces, showing that you understand their difficulties
+**Considerations:**
+- Click fraud is a real concern
+- Incentivizes aggressive ad placement that can hurt UX
+- Quality score systems help but don't eliminate the problem
 
-### Preparation Phase
-- **Guides and Tutorials (How-To)**: offer practical content with step-by-step instructions
-- **Expert Interviews**: present interviews with experts who address the problem, the solution, and the benefits
-- **Tools and Resources**: offer free tools, resources, and materials (spreadsheets, checklists, templates, ebooks)
-- **Interactive Quizzes and Tests**: create quizzes that help the audience evaluate their situation
+### Pay Per Action (CPA / PPS)
 
-### Action Phase
-- **Irresistible Offers**: create special offers with mental triggers of urgency and scarcity
-- **Stories and Testimonials**: show success stories of people who used the solution
-- **Mental Triggers**: reciprocity, social proof, authority, scarcity, urgency, and novelty
-- **Clear and Objective Calls to Action**: use clear, objective, and persuasive CTAs
+Payment per completed action: sign-up, purchase, app install. The highest alignment between advertiser and publisher interests. The advertiser only pays for real value delivered.
 
-### Maintenance Phase
-- **Exclusive Content**: offer exclusive content for customers (webinars, ebooks, VIP groups, online courses)
-- **Support and Community**: create efficient communication channels and encourage interaction
-- **Loyalty Programs**: implement programs with exclusive benefits for recurring customers
-- **Challenges and Contests**: promote challenges that motivate customers to continue using the solution
-- **Inspiring Customer Stories**: share stories of customers who overcame challenges and achieved significant results
-- **User-Generated Content**: encourage customers to create and share content related to the solution
+**Considerations:**
+- Requires careful conversion tracking
+- Higher commission rates due to lower advertiser risk
+- Lower volume but higher quality revenue
+
+### Hybrid Models
+
+Most mature ad platforms combine multiple mechanisms:
+- Base CPM for brand awareness
+- Performance add-ons (CPC, CPA) for direct response advertisers
+- Dynamic allocation that favors higher-value actions
+
+## Ad Formats
+
+### Display Ads
+
+Traditional banner ads. Sizes: 300x250 (medium rectangle), 728x90 (leaderboard), 160x600 (wide skyscraper). These remain effective for brand awareness.
+
+**Best practices:**
+- Keep animations subtle and non-intrusive
+- Ensure high viewability (above the fold or in viewport)
+- Match ad style to site design without being deceptive
+
+### Native Ads
+
+Ads that match the form and function of the surrounding content. Less intrusive, higher engagement, but require clear disclosure to maintain trust.
+
+**Best practices:**
+- Always label as "Sponsored" or "Advertisement"
+- Don't mislead users about the nature of the content
+- Quality matters more than volume
+
+### Search Ads
+
+Text-based ads displayed in search results. Highly intent-driven, typically CPC or CPC with maximum bid.
+
+**Best practices:**
+- Tight integration with organic results
+- Clear separation from organic results (labeled)
+- Relevance to search query is critical
+
+### Video Ads
+
+Pre-roll, mid-roll, or post-roll video advertising. High engagement but requires significant video content.
+
+**Best practices:**
+- Skip options improve perception without killing completion rates
+- Keep under 15-30 seconds for non-skippable
+- Respect frequency caps
+
+### Interstitial Ads
+
+Full-screen ads that appear between content transitions. High visibility but can be disruptive if overused.
+
+**Best practices:**
+- Use sparingly and only at natural transition points
+- Provide clear close options
+- Avoid during critical user actions
+
+## Key Metrics
+
+### For Publishers
+
+| Metric | Definition | Target |
+|--------|-----------|--------|
+| CPM | Revenue per 1,000 impressions | Varies by niche |
+| CPC | Revenue per click | Depends on audience value |
+| Fill Rate | % of ad requests filled | >95% |
+| Viewability | % of ads in viewport for 1+ seconds | >50% |
+| View-through Rate | % clicking after viewing | >1% |
+
+### For Advertisers
+
+| Metric | Definition | Target |
+|--------|-----------|--------|
+| CTR | Click-through rate | >1-2% |
+| Conversion Rate | Clicks resulting in action | Varies by industry |
+| CPA | Cost per acquisition | Below customer LTV |
+| ROAS | Return on ad spend | >3-5x |
+
+## Anti-Patterns to Avoid
+
+### Ad Injection
+
+Inserting ads into third-party content without the site owner's knowledge or consent. This destroys trust with both publishers and users.
+
+### Deceptive Ad Placement
+
+- Ads that look like content
+- Close buttons that don't work
+- Ads that cover essential UI
+- Auto-clicking ads
+
+### Ad Clutter
+
+Excessive ads that degrade the user experience. Studies show diminishing returns beyond certain ad density.
+
+### Lack of Transparency
+
+Not disclosing that content is sponsored or that the publisher is optimizing for ad revenue at the expense of user experience.
+
+## Workflow
+
+Use this domain skill within cali-product-workflow:
+
+| Phase | Domain Skill Contribution |
+|-------|---------------------------|
+| Phase 1 (Setup) | Ad monetization model research |
+| Phase 2 (Context) | Revenue model analysis |
+| Phase 3 (Shape) | Ad strategy in scope |
+| Phase 6 (Interface) | Ad placement and format decisions |
+| Phase 10 (Planning) | Ad feature scopes |
+
+## Output Format
+
+This domain skill contributes to:
+- **spec-product.md** — Ad monetization strategy section
+- **spec-tech.md** — Ad-related feature scopes
+- **interface proposals** — Ad placement designs
+
+## Gotchas
+
+1. **Trust erosion** — Aggressive monetization erodes trust faster than it generates revenue
+2. **Format fit** — Choose ad formats that match your content and user context
+3. **Transparency** — Always disclose sponsored content and ad-driven decisions
+4. **Metric balance** — Don't optimize purely for revenue — balance with user experience
+
+## Related Skills
+
+- **cali-product-workflow**: Orchestrates product planning
+- **cali-product-business-models**: Business model context
+- **cali-product-trust-building**: Trust considerations for monetization
+- **cali-product-promotions**: Promotional vs. advertising strategies
+
+## Environment Adaptation
+
+If a tool is unavailable, check:
+`../../../../cali-product-workflow/references/cli-tools/`
