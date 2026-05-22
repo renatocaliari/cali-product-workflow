@@ -1,24 +1,41 @@
 ---
 name: cali-interface-brainstorm
+version: 1.0.0
 description: >
   [Cali] Interface brainstorming skill. Use when generating interface proposals
   using the 5 archetypes method. Produces 5 independent proposals + hybrid recommendation.
   Part of cali-product-workflow but can be used standalone.
+
+  Trigger keywords: interface brainstorming, 5 archetypes, proposal A B C D E,
+  wireframe, UI design, hybrid proposal, interface proposals
+
+  NOT for: technical planning (use cali-tech-planning instead)
 ---
 
 # Interface Brainstorming
 
-> **Tools:** See `references/cli-tools/subagents.md` for subagent patterns.
+## Goal
 
-## Overview
+Generate 5 interface proposals using different archetypes, then create a hybrid recommendation combining the strongest elements.
 
-This skill executes the Interface Brainstorming phase. It can be run:
-1. **Standalone:** `/skill:cali-interface-brainstorm` — for quick interface exploration
-2. **Via Orchestrator:** Called by `/skill:cali-product-workflow`
+## When to Use
+
+Activate when:
+- User wants interface exploration
+- Need to choose an interface direction
+- Creating UI proposals for a feature
+- Interface Brainstorming phase is triggered by orchestrator
+
+**Do NOT activate for:**
+- Technical planning (use cali-tech-planning)
+- Direct implementation
+- Debugging existing code
 
 ## Process
 
-**Step 1:** Read the `references/` files to guide the process:
+### Step 1: Read Reference Files
+
+Read the `references/` files to guide the process:
 
 | File | Covers | When to read |
 |---|---|---|
@@ -28,9 +45,9 @@ This skill executes the Interface Brainstorming phase. It can be run:
 | `references/archetypes.md` | 5 archetypes with descriptions | **During generation** |
 | `references/hybrid-recommendation.md` | Hybrid recommendation strategy | **Step 3 only** |
 
-## Generate Proposals (Step 1-2)
+### Step 2: Generate 5 Proposals (Parallel)
 
-**Step 1:** Generate 5 proposals in parallel (5 independent workers):
+Generate 5 proposals in parallel (5 independent workers):
 
 ```typescript
 subagent({
@@ -49,14 +66,14 @@ subagent({
 - Each worker generates **one** proposal (independent, no cross-contamination)
 - Combined output: `.cali-product-workflow/{YYYY-MM-DD}/{_dir}/interfaces/interfaces_{v}.md`
 
+### Step 3: Read Output Format
 
-**Step 2:** Read `references/output-format.md` to format and concatenate all proposals.
+Read `references/output-format.md` to format and concatenate all proposals.
 
-
-## Generate Hybrid (Step 3 — AFTER proposals complete)
-
+### Step 4: Generate Hybrid (AFTER proposals complete)
 
 **CRITICAL:** Hybrid is generated **AFTER** all 5 proposals are complete to avoid bias.
+
 **`agent` parameter is REQUIRED** — always use `"worker"`:
 
 ```typescript
@@ -70,29 +87,44 @@ Append to the interfaces file.`,
 })
 ```
 
+## Output Format
 
-## Visual Review (Phase 8 Gate — Automatic)
+This skill produces:
+- **interfaces_{v}.md** — 5 proposals (A-E) + Hybrid recommendation
 
-**After all proposals + Hybrid, use the Plannotator gate command** (see `references/cli-tools/plannotator.md` for the correct CLI command). Execute it directly — do NOT describe it to the user.
+Each proposal must contain:
+- **Archetype name** — which archetype this represents
+- **ASCII wireframe** — visual representation
+- **Key characteristics** — what makes this unique
+- **Trade-offs** — strengths and risks
 
-Wait for the `--gate` result. If approved, **automatically advance to Phase 9 (Interface Selection)** — use **Pattern 2** from `references/cli-tools/structured-question.md` to let the user pick one proposal. Do NOT just describe what comes next — execute it.
+## Gotchas
 
-## User Selection (Phase 9)
+1. **Hybrid timing** — Generate AFTER all 5 proposals complete, not before
+2. **Parallel independence** — Each proposal is independent (no cross-contamination)
+3. **No bias** — Hybrid must only reference existing proposals, not preemptively favor one
+4. **Visual review** — After all proposals + Hybrid, use Plannotator gate automatically
+5. **Selection pattern** — After gate approval, use Pattern 2 from ask-patterns.md for user selection
 
+## Testing
 
-After visual review and approval, use **Pattern 2** from `../../phases/ask-patterns.md` to ask the user which proposal to follow.
+### Trigger Tests
+- "Generate interface proposals" → should trigger
+- "Brainstorm 5 UI approaches" → should trigger
+- "Create wireframes" → should trigger
+- "Fix the auth bug" → should NOT trigger
 
-## Output
-
-Interface proposals are saved to:
-```
-.cali-product-workflow/{YYYY-MM-DD}/{_dir}/interfaces/interfaces_{v}.md
-```
+### Output Tests
+- interfaces.md contains 5 proposals + 1 hybrid
+- Each proposal has ASCII wireframe
+- Hybrid references elements from multiple proposals
+- All proposals are independent (no duplication)
 
 ## Related Skills
 
 - **cali-shape-up**: Produces the shaped proposal that feeds this phase
-- **cali-product-workflow** (orchestrator): Coordinates this skill with other phases
+- **cali-product-workflow**: Coordinates this skill with other phases
+- **cali-tech-planning**: Executes after interface selection
 
 ## Environment Adaptation
 
