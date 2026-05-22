@@ -5,19 +5,39 @@ description: >
   a product proposal using the Shape Up method. Produces a shaped proposal
   with problem, solution, scope (IN/OUT), and risks. Part of the
   cali-product-workflow but can be used standalone.
+
+  Trigger keywords: shape up, shape a proposal, product planning, scope IN OUT,
+  shaped proposal, appetite, rabbit hole, bet
+
+  NOT for: execution, implementation, coding (use cali-product-scope-executor instead)
 ---
 
 # Shape Up Planning
 
-> **Tools:** See `references/cli-tools/subagents.md` for subagent patterns.
+## Goal
 
-## Overview
+Transform a raw product idea into a shaped proposal with:
+- **Problem** — what problem does this solve?
+- **Solution** — how do we solve it?
+- **Scope (IN/OUT)** — what's in and what's out?
+- **Risks** — what could go wrong?
 
-This skill executes the Shape Up planning phase. It can be run:
-1. **Standalone:** `/skill:cali-shape-up` — for quick shaping sessions
-2. **Via Orchestrator:** Called by `/skill:cali-product-workflow`
+## When to Use
 
-## 1a. Parallel Recon (optional — recommended for complex features)
+Activate when:
+- User wants to shape a product proposal
+- Creating a spec-product.md for a new feature
+- Planning a feature with clear boundaries
+- Estimating appetite and scope before execution
+
+**Do NOT activate for:**
+- Direct implementation (use cali-product-scope-executor)
+- Debugging existing code
+- Quick questions
+
+## Process
+
+### 1a. Parallel Recon (optional — recommended for complex features)
 
 Before shaping, launch `subagent` to map context:
 
@@ -45,7 +65,7 @@ constraints for: [description].`,
 
 Read the outputs before proceeding.
 
-## 1b. Shaping
+### 1b. Shaping
 
 Read the `references/` files to guide the process:
 
@@ -102,14 +122,42 @@ Show the IN/OUT scope table. Ask:
 
 **Note:** No Plannotator re-run — ask tool already confirms selections.
 
-## Output
+## Output Format
 
-The shaped proposal is saved to:
-```
-.cali-product-workflow/{YYYY-MM-DD}/{_dir}/plans/spec-product_{v}.md
-```
+This skill produces:
+- **spec-product_{v}.md** — Shaped proposal with problem, solution, IN/OUT scope, risks
 
 See `references/proposal-structure.md` for the expected output format.
+
+The file must contain:
+- **Appetite** — how much time/effort (e.g., "3 slices")
+- **Problem** — what problem does this solve?
+- **Solution** — how do we solve it?
+- **IN scope** — what's included
+- **OUT scope** — what's explicitly excluded
+- **Rabbit holes** — risky areas to watch
+- **Risks** — what could go wrong
+
+## Gotchas
+
+1. **Scope adjustment timing** — After Gate approval, not immediately after shaping
+2. **No Interface question** — Already handled in Setup phase, don't ask again
+3. **Parallel recon value** — For complex features, recon catches missed dependencies
+4. **IN/OUT balance** — IN must fit within appetite; OUT must be explicit
+5. **No bet table here** — Betting table is part of cali-product-workflow orchestrator
+
+## Testing
+
+### Trigger Tests
+- "Shape up this feature" → should trigger
+- "Create a shaped proposal for login" → should trigger
+- "Debug the auth flow" → should NOT trigger
+
+### Output Tests
+- spec-product.md contains problem/solution/IN/OUT
+- Appetite is stated (e.g., "3 slices")
+- OUT scope is explicit (not just "and other things")
+- Risks are documented
 
 ## Related Skills
 
